@@ -67,6 +67,14 @@ def select_full_res(picam2):
             controls = {'NoiseReductionMode': 0})
 
     return camera_config
+
+def capture_file(picam2, iteration, file_format, location):
+    if (file_format == 'dng'):
+        picam2.capture_file(f"{location}{iteration}.dng", 'raw')
+
+    else:
+        picam2.capture_file(f"{location}{iteration}.{file_format}")
+
 async def main():
     """Main function
     kwargs -- any input parameters 
@@ -76,7 +84,8 @@ async def main():
     time -- if enabled, log the fps in a seperate csv
     location -- sets the location to save to file
     file-format -- sets the file format (jpg, png, dng)
-    number -- sets the number of pictures to take, 1 default, 0 -> infinite
+    number -- sets the number of pictures to take
+              1 default, 0 -> infinite
     """
     
     #Handle all the args stuff
@@ -93,23 +102,30 @@ async def main():
             '-f', "--file-format")
     parser.add_argument(
             '-n', "--number")
+    parser.add_argument(
+            '-v', "--verbose", action='store_true')
 
-    args = parser.parge_args()
+    args = parser.parse_args()
     
     #Set the settings from the args correctly
-    if (args.file-format not in VALID_FILE_TYPES):
+    if (args.file_format not in VALID_FILE_TYPES and args.file_format != None):
         print("Invalid file format")
         return
+
+    file_format = 'jpg'
+    if (args.file_format != None):
+        file_format = args.file_format
+
+
     
     #kinda pointless code so then these vars are saved as true booleans
     #rather than True or None
-    if (args.binning)
+    if (args.binning):
         binning = True
     else:
         binning = False
 
     if (args.save):
-        save = args.save
         save = True
     else: 
         save = False
@@ -119,15 +135,25 @@ async def main():
     else:
         time_logging = False
 
-    location = '.'
+    if (args.verbose):
+        verbose = True
+    else:
+        verbose = False
+
+
+    #Handles the location settings
+    location = ''
     if (args.location != None):
         save = True
         location = args.location
+        if (location[-1] != '/'):
+            location += '/'
 
+
+    #handles the iteration stuff, default is 1
     iterations = 1
     if (args.number != None):
-        iterations = args.number
-
+        iterations = int(args.number)
 
     #Initializes the camera
     picam2 = initialize_camera()
@@ -142,11 +168,10 @@ async def main():
         picam2.configure(camera_config)
 
 
-    
-
     #Start the camera
     picam2.start()
 
+    #Here incase photos written to array
     image_array=[[0,0,0]]
 
     #start the time logging stuff if enabled
@@ -154,17 +179,38 @@ async def main():
         timer = timeLogging()
         timer.start_timer()
 
-    for i in range(iterations):
-        #Take the photo and maybe save it
-        if (save):
-            picam2.capture_file(f"{i}.jpg")
-        else:
-            image_array, _ = await asyncio.gather(
-                    take_picture(picam2),
-                    save_to_file(image_array, f'{i}.txt'))
-        #If logging is enabled then log it
+    try:
+        i = 0
+        while True:
+            #Take the photo and maybe save it
+            if (save):
+                capture_file(picam2, i, file_format, location) 
+
+            else:
+                image_array, _ = await asyncio.gather(
+                        take_picture(picam2),
+                        save_to_file(image_array, f'{i}.txt'))
+            #If logging is enabled then log it, and if verbose, then print
+            if (time_logging):
+                if (verbose):
+                    timer.log_and_print()
+                else:
+                    timer.log()
+
+            #Count the iterations
+            i += 1
+            if (i == iterations):
+                break
+    #If KeyboardInterrupt to break the while True, time data is still saved
+    except KeyboardInterrupt:
         if (time_logging):
-            timer.log()
+            timer.save_to_file(location)
+            print("saved to file")
+        return
+    if (time_logging):
+        timer.save_to_file(location)
+        print("saved to file")
+
             
 
 

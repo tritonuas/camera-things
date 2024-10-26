@@ -35,3 +35,7 @@
 *.jpg
 *.dng
 
+#Camera out stuff
+times.csv
+out/
+
