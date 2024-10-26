@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# Images
+*.jpg
+*.dng
+
+#Camera out stuff
+times.csv
+out/
+

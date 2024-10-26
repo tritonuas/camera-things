@@ -1,0 +1,176 @@
+from picamera2 import Picamera2, Preview
+from time_logging import timeLogging
+import time
+import asyncio
+from PIL import Image
+import numpy as np
+import argparse
+
+
+VALID_FILE_TYPES=[
+        'jpg',
+        'png',
+        'dng']
+
+
+async def take_picture(cam):
+    """Async take a picture and returns it as an array
+    cam -- The picam2 object
+    """
+    return cam.capture_array("main")
+
+async def save_to_file(image_list, filename):
+    """Does nothing for now
+    Later might be changed to send data over wifi or other interface
+    """
+
+    return
+
+def initialize_camera():
+    """Initializes the camera and returns a 
+    picam2 object ready to be configured
+    """
+    picam2 = Picamera2()
+    return picam2
+    
+def print_sensor_modes():
+    """Prints the modes of the camera
+    """
+    modes = picam2.sensor_modes
+    print(modes)
+
+
+def select_2x2_binning(picam2):
+    """Configures the settigns to use 2x2 binning mode and returns the config
+    """
+
+    modes = picam2.sensor_modes
+    mode = modes[2]
+    camera_config = picam2.create_still_configuration(
+            {"size": mode['size']}, 
+            buffer_count=4,
+            raw={'format': mode['unpacked']}, 
+            sensor={'output_size': mode['size'],
+                    'bit_depth': mode['bit_depth']})
+
+    return camera_config
+
+def select_full_res(picam2):
+    """Configures the camera to take full res photos
+    returns the settings
+    """
+
+    camera_config = picam2.create_still_configuration(
+            {"size": (4056, 3040)},
+            buffer_count=1,
+            queue=False,
+            controls = {'NoiseReductionMode': 0})
+
+    return camera_config
+async def main():
+    """Main function
+    kwargs -- any input parameters 
+
+    binning -- if enabled, enable 2x2 binning
+    save -- if enabled write to SD
+    time -- if enabled, log the fps in a seperate csv
+    location -- sets the location to save to file
+    file-format -- sets the file format (jpg, png, dng)
+    number -- sets the number of pictures to take, 1 default, 0 -> infinite
+    """
+    
+    #Handle all the args stuff
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+            '-b', "--binning", action='store_true')
+    parser.add_argument(
+            '-s', "--save", action='store_true')
+    parser.add_argument(
+            '-t', "--time", action='store_true')
+    parser.add_argument(
+            '-l', "--location")
+    parser.add_argument(
+            '-f', "--file-format")
+    parser.add_argument(
+            '-n', "--number")
+
+    args = parser.parge_args()
+    
+    #Set the settings from the args correctly
+    if (args.file-format not in VALID_FILE_TYPES):
+        print("Invalid file format")
+        return
+    
+    #kinda pointless code so then these vars are saved as true booleans
+    #rather than True or None
+    if (args.binning)
+        binning = True
+    else:
+        binning = False
+
+    if (args.save):
+        save = args.save
+        save = True
+    else: 
+        save = False
+
+    if (args.time):
+        time_logging = True
+    else:
+        time_logging = False
+
+    location = '.'
+    if (args.location != None):
+        save = True
+        location = args.location
+
+    iterations = 1
+    if (args.number != None):
+        iterations = args.number
+
+
+    #Initializes the camera
+    picam2 = initialize_camera()
+
+
+    #Set the appropirate camera config
+    if (binning == True):
+        camera_config = select_2x2_binning(picam2)
+        picam2.configure(camera_config)
+    else:
+        camera_config = select_full_res(picam2)
+        picam2.configure(camera_config)
+
+
+    
+
+    #Start the camera
+    picam2.start()
+
+    image_array=[[0,0,0]]
+
+    #start the time logging stuff if enabled
+    if (time_logging):
+        timer = timeLogging()
+        timer.start_timer()
+
+    for i in range(iterations):
+        #Take the photo and maybe save it
+        if (save):
+            picam2.capture_file(f"{i}.jpg")
+        else:
+            image_array, _ = await asyncio.gather(
+                    take_picture(picam2),
+                    save_to_file(image_array, f'{i}.txt'))
+        #If logging is enabled then log it
+        if (time_logging):
+            timer.log()
+            
+
+
+
+# Run the main function
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
