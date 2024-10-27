@@ -15,10 +15,11 @@ output_dir_dng="${1}dng"
 b_output_dir_jpg="b_${1}jpg"
 b_output_dir_png="b_${1}png"
 b_output_dir_dng="b_${1}dng"
+b_output_dir_dng_f="b_${1}_f_dng"
 
 
 # Check if any directory already exists
-for dir in "$output_dir_jpg" "$output_dir_png" "$output_dir_dng" "$b_output_dir_jpg" "$b_output_dir_png" "$b_output_dir_dng"; do
+for dir in "$output_dir_jpg" "$output_dir_png" "$output_dir_dng" "$b_output_dir_jpg" "$b_output_dir_png" "$b_output_dir_dng" "$b_output_dir_dng_f"; do
     if [ -d "$dir" ]; then
         echo "Error: Directory '$dir' already exists."
         exit 1
@@ -26,7 +27,7 @@ for dir in "$output_dir_jpg" "$output_dir_png" "$output_dir_dng" "$b_output_dir_
 done
 
 
-for dir in "$output_dir_jpg" "$output_dir_png" "$output_dir_dng" "$b_output_dir_jpg" "$b_output_dir_png" "$b_output_dir_dng"; do
+for dir in "$output_dir_jpg" "$output_dir_png" "$output_dir_dng" "$b_output_dir_jpg" "$b_output_dir_png" "$b_output_dir_dng" "$b_output_dir_dng_f"; do
     # Create the directory if it doesn't exist
     mkdir -p "$dir"
     # Empty the directory if it exists
@@ -42,3 +43,7 @@ python main.py -s -t -l "$output_dir_dng" -f dng -n 10 -v
 python main.py -b -s -t -l "$b_output_dir_jpg" -f jpg -n 120 -v
 python main.py -b -s -t -l "$b_output_dir_png" -f png -n 20 -v
 python main.py -b -s -t -l "$b_output_dir_dng" -f dng -n 120 -v
+
+
+
+python main.py -b -s -t -l "$b_output_dir_dng_f" -f dng -n 0 -v
