@@ -75,6 +75,10 @@ def capture_file(picam2, iteration, file_format, location):
     else:
         picam2.capture_file(f"{location}{iteration}.{file_format}")
 
+def format_number(num, digits):
+    return f"{num:0{digits}d}"
+
+
 async def main():
     """Main function
     kwargs -- any input parameters 
@@ -179,17 +183,24 @@ async def main():
         timer = timeLogging()
         timer.start_timer()
 
+    if (save):
+        digits = len(str(iterations))
+        print(digits)
+    if (iterations == 0):
+        digits = 8
+
     try:
         i = 0
         while True:
             #Take the photo and maybe save it
             if (save):
-                capture_file(picam2, i, file_format, location) 
+                capture_file(picam2, format_number(i, digits), file_format, location) 
 
             else:
+
                 image_array, _ = await asyncio.gather(
                         take_picture(picam2),
-                        save_to_file(image_array, f'{i}.txt'))
+                        save_to_file(image_array, f'{format_number(i, digits)}.txt'))
             #If logging is enabled then log it, and if verbose, then print
             if (time_logging):
                 if (verbose):

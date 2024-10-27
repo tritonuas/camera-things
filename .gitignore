@@ -38,4 +38,6 @@
 #Camera out stuff
 times.csv
 out/
-
+b_remove*
+testing_out*
+remove_test*
