@@ -1,15 +1,24 @@
-import treading
-import queue
+import asyncio
+from queue import Queue
 
 response_queue = queue.Queue()
 
 class ConnectionListener:
 
-    def __init__(self):
+    def __init__(self, connection):
+        self.connection = connection
 
-        if not self.thread or not self.thread.is_alive():
-            self.stop_event.clear9)
-            self.thread = threading.Thread(target=self._receive_message)
-            self.thread.daemon = True
-            self.thread.start()
-        
+    async def start_listener(self):
+        while True:
+            self.response = self.connection.recv_match()
+            if not self.response:
+                continue
+            if (self.response.get_type() == "ATTITUDE" or 
+                self.reponse.get_type() == GLOBAL_POSITION_INT):
+                self.response_queue.put(self.response)
+
+    def stop_listener(self):
+            pass
+
+
+

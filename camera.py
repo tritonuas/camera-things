@@ -68,8 +68,6 @@ class Camera:
 
     def take_photo():
 
-
-
         #Here incase photos written to array
         self.image_array=[[0,0,0]]
 
@@ -78,43 +76,53 @@ class Camera:
             self.timer = timeLogging()
             self.timer.start_timer()
 
+        # Determine the number of leading zeros
+        # depending on the number of iterations
         if (self.save):
             self.digits = len(str(self.iterations))
-            print(digits)
         if (self.iterations == 0):
-            digits = 8
+            self.digits = 8
 
         try:
-            i = 0
+            self.i = 0
             while True:
                 #Take the photo and maybe save it
-                if (save):
-                    capture_file(picam2, format_number(i, digits), file_format, location) 
+                if (self.save):
+                    capture_file(self.picam2, 
+                                 format_number(self.i, self.digits),
+                                 self.file_format,
+                                 self.location) 
 
                 else:
+                    """
+                    self.image_array, _ = await asyncio.gather(
+                            take_picture(self.picam2),
+                            save_to_file(self.image_array, f'{format_number(i, digits)}.txt'))
+                    """
+                    # Remove later, right now, we only need to be saving
+                    break
 
-                    image_array, _ = await asyncio.gather(
-                            take_picture(picam2),
-                            save_to_file(image_array, f'{format_number(i, digits)}.txt'))
                 #If logging is enabled then log it, and if verbose, then print
-                if (time_logging):
-                    if (verbose):
-                        timer.log_and_print()
+                if (self.time_logging):
+                    if (self.verbose):
+                        self.timer.log_and_print()
                     else:
-                        timer.log()
+                        self.timer.log()
 
                 #Count the iterations
-                i += 1
-                if (i == iterations):
+                self.i += 1
+                if (self.i == self.iterations):
                     break
+        #TODO: Make it so then when the method is ran in main file, this still
+        #      Gets the KeyboardInterrupt error
         #If KeyboardInterrupt to break the while True, time data is still saved
         except KeyboardInterrupt:
-            if (time_logging):
-                timer.save_to_file(location)
+            if (self.time_logging):
+                self.timer.save_to_file(self.location)
                 print("saved to file")
             return
-        if (time_logging):
-            timer.save_to_file(location)
+        if (self.time_logging):
+            self.timer.save_to_file(self.location)
             print("saved to file")
 
 
@@ -185,11 +193,5 @@ class Camera:
 
 
                 
-
-
-
-# Run the main function
-    if __name__ == "__main__":
-        asyncio.run(main())
 
 
