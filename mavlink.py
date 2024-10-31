@@ -1,7 +1,9 @@
 from pymavlink import mavutil
+import queue
+import threading
+
 
 # Start a connection listening on a UDP port
-connection = mavutil.mavlink_connection('/dev/serial0', baud=57600)
 
 # Wait for the first heartbeat
 #   This sets the system and component ID of remote system for the link
@@ -40,6 +42,57 @@ while True:
         print(response)
     print(response.get_type())
 
+
+class MavLink:
+    
+    request_attitude_message = connection.mav.command_long_encode(
+            connection.target_system,
+            connection.target_component,
+            mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE, 
+            0,  
+            mavutil.mavlink.MAVLINK_MSG_ID_ATTITUDE,  
+            0, # param2: Interval in microseconds
+            0, 0, 0, 0, 0
+            )
+    
+    request_position_message = connection.mav.command_long_encode(
+            connection.target_system,
+            connection.target_component,
+            mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE, 
+            0,  
+            mavutil.mavlink.MAVLINK_MSG_ID_ATTITUDE,  
+            0, # param2: Interval in microseconds
+            0, 0, 0, 0, 0
+            )
+
+    response_queue = queue.Queue()
+    stop_listener = threading.Event()
+
+    def __init__(self):
+        self.connection = mavutil.mavlink_connection('/dev/serial0',
+                                                     baud=57600)
+
+    def __start_listener(self):
+        while not self.stop_event.is_set(): 
+            self.response = self.connection.recv_match()
+            if not self.response:
+                continue
+            if (self.response.get_type() == "ATTITUDE" or 
+                self.reponse.get_type() == GLOBAL_POSITION_INT):
+                self.response_queue.put(self.response)
+
+    def __stop_listener(self):
+        if self.thread and self.thread.is_alive():
+            self.stop_event.set()
+            self.thread.join()
+
+
+
+
+    def get_attitude_and_position():
+
+        connection.mav.send(request_attitude_message)
+        connection.mav
 
 
 

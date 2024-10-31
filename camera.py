@@ -49,10 +49,11 @@ class Camera:
         #handles the iteration stuff, default is 1
         self.iterations = kwargs.get('iterations', 1)
 
+
+    def initialize_and_configure():
+
         #Initializes the camera
         self.picam2 = initialize_camera()
-
-
         #Set the appropirate camera config
         if (self.binning == True):
             self.picam2.configure(select_2x2_binning(picam2))
@@ -60,21 +61,27 @@ class Camera:
             self.picam2.configure(select_full_res(picam2))
 
 
+    def start():
         #Start the camera
         self.picam2.start()
+
+
+    def take_photo():
+
+
 
         #Here incase photos written to array
         self.image_array=[[0,0,0]]
 
         #start the time logging stuff if enabled
-        if (time_logging):
-            timer = timeLogging()
-            timer.start_timer()
+        if (self.time):
+            self.timer = timeLogging()
+            self.timer.start_timer()
 
-        if (save):
-            digits = len(str(iterations))
+        if (self.save):
+            self.digits = len(str(self.iterations))
             print(digits)
-        if (iterations == 0):
+        if (self.iterations == 0):
             digits = 8
 
         try:
