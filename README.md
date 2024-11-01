@@ -10,4 +10,11 @@ pyserial (NOT serial)
 First create a python virtual enviroment
 ```python -m venv .venv```
 
-Then install
+Then activate it
+```source .venv/bin/activate```
+
+Then install the needed packages
+
+```pip install pymavlink pyserial picamera2```
+
+

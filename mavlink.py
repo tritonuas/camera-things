@@ -1,7 +1,12 @@
+import time
 import asyncio
 from pymavlink import mavutil
 import queue
 from connection_listener import response_queue, ConnectionListener
+
+
+RESPONSE_COUNT = 2
+MICRO_TO_MILLI = 1000
 
 
 class Mavlink:
@@ -16,9 +21,9 @@ class Mavlink:
                 self.connection.target_system,
                 self.connection.target_component,
                 mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE, 
-                0,  
+                0,
                 mavutil.mavlink.MAVLINK_MSG_ID_ATTITUDE,  
-                0, # param2: Interval in microseconds
+                0,
                 0, 0, 0, 0, 0
                 )
         
@@ -32,11 +37,23 @@ class Mavlink:
                 0, 0, 0, 0, 0
                 )
 
+        self.REQUEST_TIME_MESSAGE = self.connection.mav.command_long_encode(
+                self.connection.target_system,
+                self.connection.target_component,
+                mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE, 
+                0,  
+                mavutil.mavlink.MAVLINK_MSG_ID_SYSTEM_TIME,
+                0, # param2: Interval in microseconds
+                0, 0, 0, 0, 0
+                )
+
         # Wait for the first heartbeat
         # This sets the system and component ID of remote system for the link
         self.connection.wait_heartbeat()
         print("Heartbeat from system (system %u component %u)" % 
               (self.connection.target_system, self.connection.target_component))
+
+        self._determine_time_offset()
 
     async def get_attitude_and_position(self):
 
@@ -47,8 +64,10 @@ class Mavlink:
 
         self.responses = []
         self.responses_count = 0
-        while (self.responses_count < 2):
+        while (self.responses_count < RESPONSE_COUNT):
             self.response = await asyncio.to_thread(response_queue.get)
+            self.response["time_unix_msec"] = (self.response["time_boot_ms"] +
+                                               self.time_offset)
             self.responses.append(self.response)
             self.responses_count += 1
         self.listener_task.cancel()
@@ -58,15 +77,16 @@ class Mavlink:
             print("Listener stopped.")
         return self.responses
             
-
-
-
-
-
-
-        
-        
-        
-
+    async def request_time(self):
+        self.connection.mav.send(self.REQUEST_POSITION_MESSAGE)
+        while True:
+            self.response = self.connection.recv_match()
+            if (self.response.get_type() == "SYSTEM_TIME"):
+                return response
+    async def _determine_time_offset(self):
+        self.request_time_response = request_time()
+        self.time_offset = (self.request_time_response["time_unix_usec"] * 
+                            MICRO_TO_MILLI -
+                            self.request_time_response["time_boot_ms"])
 
 
