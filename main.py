@@ -45,7 +45,8 @@ async def main():
             '-n', "--number")
     parser.add_argument(
             '-v', "--verbose", action='store_true')
-
+    parser.add_argument(
+            '-m', "--mavlink", action='store_true')
     args = parser.parse_args()
     
     #Set the settings from the args correctly
@@ -81,10 +82,18 @@ async def main():
     else:
         verbose = False
 
+    if (args.mavlink):
+        mavlink_enabled = True
+    else:
+        mavlink_enabled = False
+
+
+
 
     #Handles the location settings
     location = ''
     if (args.location != None):
+        location = args.location
         save = True
 
 
@@ -99,7 +108,8 @@ async def main():
             time=time_logging,
             location=location,
             file_format=file_format,
-            verbose=verbose)
+            verbose=verbose,
+            mavlink=mavlink_enabled)
 
 
     rpicam.initialize_and_configure()
@@ -108,7 +118,7 @@ async def main():
     rpicam.start()
 
     print(iterations)
-    rpicam.take_photos(iterations)
+    await rpicam.take_photos(iterations)
 
 
 

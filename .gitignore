@@ -46,3 +46,4 @@ venv.sh
 __pycache__
 *py~
 *.swp
+.venv

@@ -1,5 +1,6 @@
 from picamera2 import Picamera2, Preview
 from time_logging import timeLogging
+from mavlink import Mavlink
 import time
 import asyncio
 from PIL import Image
@@ -8,9 +9,6 @@ import argparse
 
 
 class Camera:
-
-
-
     def __init__(self, **kwargs):
         
 
@@ -22,6 +20,7 @@ class Camera:
         time -- if enabled, log the fps in a seperate csv
         location -- sets the location to save to file
         file-format -- sets the file format (jpg, png, dng)
+        mavlink -- enables mavlink logging of attitude and gps
         """
 
         VALID_FILE_TYPES=[
@@ -39,6 +38,8 @@ class Camera:
         self.save = kwargs.get('save', False)
         self.time = kwargs.get('time', False)
         self.verbose = kwargs.get('verbose', False)
+        self.mavlink_enabled = kwargs.get('mavlink', False)
+
 
         #Handles the location settings
         self.location = kwargs.get('location', '.')
@@ -47,6 +48,11 @@ class Camera:
 
         if (self.location[-1] != '/'):
             self.location += '/'
+
+        if (self.mavlink_enabled):
+            self.mavlink = Mavlink()
+
+
 
     async def take_picture(self, cam):
         """Async take a picture and returns it as an array
@@ -135,7 +141,7 @@ class Camera:
 
     def take_photo(self):
         self.take_photos(1)
-    def take_photos(self, iterations):
+    async def take_photos(self, iterations):
 
         #Here incase photos written to array
         self.image_array=[[0,0,0]]
@@ -158,6 +164,8 @@ class Camera:
             while True:
                 #Take the photo and maybe save it
                 if (self.save):
+                    if (self.mavlink_enabled):
+                        await self.mavlink.get_attitude_and_position()
                     self.capture_file(self.picam2, 
                                  self.format_number(i, self.digits),
                                  self.file_format,
