@@ -56,13 +56,17 @@ class Mavlink:
 
         self._determine_time_offset()
 
+
+    """This function bad
+    """
     async def get_attitude_and_position(self):
 
         self.listener = ConnectionListener(self.connection)
-        self.listener_task = asyncio.create_task(self.listener.start_listener())
+        self.listener_task = asyncio.create_task(self.listener.start_listener(queue_bool=False, unix_time_bool=True, file_frequency=10))
         self.connection.mav.send(self.REQUEST_ATTITUDE_MESSAGE)
         self.connection.mav.send(self.REQUEST_POSITION_MESSAGE)
 
+        return
         self.responses = []
         self.responses_count = 0
         while (self.responses_count < RESPONSE_COUNT):
@@ -78,12 +82,17 @@ class Mavlink:
             print("Listener stopped.")
         return self.responses
             
-    async def request_time(self):
+    def start_getting_attitude_and_position(self, location):
+
+        self.listener = ConnectionListener(self.connection)
+        self.listener_task = asyncio.create_task(self.listener.start_listener(queue_bool=False, unix_time_bool=True, file_frequency=10, location=location))
+
+    async def request_attitude_and_position(self):
+        self.connection.mav.send(self.REQUEST_ATTITUDE_MESSAGE)
         self.connection.mav.send(self.REQUEST_POSITION_MESSAGE)
-        while True:
-            self.response = self.connection.recv_match()
-            if (self.response.get_type() == "SYSTEM_TIME"):
-                return response
+
+
+
     async def _determine_time_offset(self):
         self.request_time_response = request_time()
         self.time_offset = (self.request_time_response["time_unix_usec"] * 

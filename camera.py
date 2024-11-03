@@ -51,6 +51,7 @@ class Camera:
 
         if (self.mavlink_enabled):
             self.mavlink = Mavlink()
+            self.mavlink.start_getting_attitude_and_position(self.location)
 
 
 
@@ -139,6 +140,7 @@ class Camera:
         self.picam2.start()
 
 
+
     def take_photo(self):
         self.take_photos(1)
     async def take_photos(self, iterations):
@@ -165,7 +167,7 @@ class Camera:
                 #Take the photo and maybe save it
                 if (self.save):
                     if (self.mavlink_enabled):
-                        await self.mavlink.get_attitude_and_position()
+                        await self.mavlink.request_attitude_and_position()
                     self.capture_file(self.picam2, 
                                  self.format_number(i, self.digits),
                                  self.file_format,
