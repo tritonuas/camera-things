@@ -120,14 +120,6 @@ async def main():
     print(iterations)
     await rpicam.take_photos(iterations)
 
-
-
-
-
-            
-
-
-
 # Run the main function
 if __name__ == "__main__":
     asyncio.run(main())
