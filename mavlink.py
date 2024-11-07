@@ -5,6 +5,8 @@ import queue
 from connection_listener import response_queue, ConnectionListener
 
 
+"""Constants
+"""
 RESPONSE_COUNT = 2
 MICRO_TO_MILLI = 1000
 
@@ -15,9 +17,12 @@ class Mavlink:
 
     def __init__(self):
 
-        # Start a connection listening on a UDP port
+        """Start a connection on the serial0 port, with baud 57600
+        """
         self.connection = mavutil.mavlink_connection('/dev/serial0',
                                                      baud=57600)
+        """The mavlink messages to request attitude and GPS and time
+        """
         self.REQUEST_ATTITUDE_MESSAGE = self.connection.mav.command_long_encode(
                 self.connection.target_system,
                 self.connection.target_component,
@@ -48,25 +53,25 @@ class Mavlink:
                 0, 0, 0, 0, 0
                 )
 
-        # Wait for the first heartbeat
-        # This sets the system and component ID of remote system for the link
+        """Wait for the first heartbeat
+        This sets the system and component ID of remote system for the link
+        """
         self.connection.wait_heartbeat()
         print("Heartbeat from system (system %u component %u)" % 
               (self.connection.target_system, self.connection.target_component))
-
         self._determine_time_offset()
 
 
-    """This function bad
-    """
     async def get_attitude_and_position(self):
-
+        """This function bad, don't use for now
+        """
         self.listener = ConnectionListener(self.connection)
         self.listener_task = asyncio.create_task(self.listener.start_listener(queue_bool=False, unix_time_bool=True, file_frequency=10))
         self.connection.mav.send(self.REQUEST_ATTITUDE_MESSAGE)
         self.connection.mav.send(self.REQUEST_POSITION_MESSAGE)
-
         return
+
+        """
         self.responses = []
         self.responses_count = 0
         while (self.responses_count < RESPONSE_COUNT):
@@ -81,19 +86,38 @@ class Mavlink:
         except asyncio.CancelledError:
             print("Listener stopped.")
         return self.responses
+        """
             
     def start_getting_attitude_and_position(self, location):
+        """Starts the connection_listener in the background
+        TODO: Make it so then it will actually take in arguments
+        """
 
+
+        """Initalizes the listerner claass
+        """
         self.listener = ConnectionListener(self.connection)
-        self.listener_task = asyncio.create_task(self.listener.start_listener(queue_bool=False, unix_time_bool=True, file_frequency=10, location=location))
+        """Starts the listener class
+        """
+        self.listener_task = asyncio.create_task(self.listener.start_listener(
+            queue_bool=False,
+            unix_time_bool=True,
+            file_frequency=10,
+            location=location))
 
     async def request_attitude_and_position(self):
+        """Sends mavlink messages to request attitude and postion
+        Use with start_getting_attitude_and_position to receive the responses
+        """
         self.connection.mav.send(self.REQUEST_ATTITUDE_MESSAGE)
         self.connection.mav.send(self.REQUEST_POSITION_MESSAGE)
 
 
 
     async def _determine_time_offset(self):
+        """Determines the time offset between unix time and time to boot
+        TODO: see if this is really needed
+        """
         self.request_time_response = request_time()
         self.time_offset = (self.request_time_response["time_unix_usec"] * 
                             MICRO_TO_MILLI -

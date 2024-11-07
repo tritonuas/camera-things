@@ -3,10 +3,17 @@ import asyncio
 import queue
 from pymavlink import mavutil
 
+"""Not used currently
+Use if mavlink response needs to get sent back to mavlink class
+"""
 response_queue = queue.Queue()
 
+"""Constants"""
 MICRO_TO_MILLI = 1000
 
+"""Not used currently
+The dict elements of the attitude and gps
+"""
 DICT_ELEMENTS_ATTITUDE = [
         "time_boot_ms",
         "time_unix_ms",
@@ -33,11 +40,16 @@ DICT_ELEMENTS_GPS = [
 class ConnectionListener:
 
     def __init__(self, connection):
+        """Constructor for ConnectionListener class
+        connection -- The mavlink connection
+        """
 
-
-
+        """Sets the connection to the input connection
+        """
         self.connection = connection
 
+        """The request time message to sync the clocks
+        """
         self.REQUEST_TIME_MESSAGE = self.connection.mav.command_long_encode(
                 self.connection.target_system,
                 self.connection.target_component,
@@ -47,7 +59,8 @@ class ConnectionListener:
                 0, # param2: Interval in microseconds
                 0, 0, 0, 0, 0
                 )
-        print("testkajdlkasjdsld")
+        """Determines the time offset between time_boot_ms and unix time
+        """
         self._determine_time_offset()
 
         
@@ -57,25 +70,56 @@ class ConnectionListener:
                              unix_time_bool,
                              file_frequency,
                              location):
+
+        """Starts the listener
+        This receices mavlink responses and writes it to a file or puts it
+        in the queue
+
+        queue_bool -- whether to put the response in the queue or save it to
+                        a file
+        unix_time_bool -- Whether to also save the unix time along with the
+                            boot time
+        file_frequency -- How frequently to save the mavlink data to a file
+        location -- The location to save the file
+        """
     
+
+        """List to store responses for the mavlink data
+        """
         self.attitude_responses = []
         self.gps_responses = []
+        """Used to break the loop via self.stop_listener
+        """
         self.loop = True
+        """Counter for the number of files in each list
+        TODO: Find out if there is preformance difference between this
+        """
         self.number_of_gps_files = 0
         self.number_of_attitude_files = 0
         while (self.loop):
+            """Receive the response
+            """
+
             self.response = self.connection.recv_match()
+            """Check if the responses is real"""
             if not self.response:
                 continue
+
+            """Check if the responses is not an imposter
+            """
             if (self.response.get_type() == "ATTITUDE" or 
                 self.response.get_type() == "GLOBAL_POSITION_INT"):
-                #print(self.response)
+                
+                """Add the unix time if enabled
+                """
                 if (unix_time_bool):
                     self.temp_response = []
                     self.temp_response.append(
                             self.response.time_boot_ms +
                             self.time_offset)
 
+                """If the response is attitude, then save that data
+                """
                 if (self.response.get_type() == "ATTITUDE"):
                     
                     self.temp_response.append(self.response.time_boot_ms)
@@ -88,6 +132,8 @@ class ConnectionListener:
                     if (not queue_bool):
                         self.attitude_responses.append(self.temp_response)
 
+                """If the response is GPS, then save that data
+                """
                 if (self.response.get_type() == "GLOBAL_POSITION_INT"):
                     self.temp_response.append(self.response.time_boot_ms)
                     self.temp_response.append(self.response.lat)
@@ -100,46 +146,78 @@ class ConnectionListener:
                     if (not queue_bool):
                         self.gps_responses.append(self.temp_response)
 
+                """Puts the response in the queue if enabled
+                """
                 if (queue_bool):
                     response_queue.put(self.temp_response)
 
+                """If the queue is not enabled, then save it to file
+                """
                 else:
-
-                    if (len(self.gps_responses) % file_frequency == 0 and not len(self.gps_responses) == 0):
-                        self._write_to_csv(self.gps_responses, location + str(self.number_of_gps_files) + "gps.csv")
+                    """Saves the file if there is the right number of responses
+                    """
+                    if (len(self.gps_responses) % file_frequency == 0 and 
+                        not len(self.gps_responses) == 0):
+                        self._write_to_csv(self.gps_responses,
+                                           location + 
+                                           str(self.number_of_gps_files) +
+                                           "gps.csv")
+                        """Resets the vars
+                        """
                         self.number_of_gps_files += 1
                         self.gps_responses = []
-                        print("wrote gps")
 
-                    if (len(self.attitude_responses) % file_frequency == 0 and not len(self.attitude_responses) == 0):
-                        self._write_to_csv(self.attitude_responses, location + str(self.number_of_attitude_files) + "attitude.csv")
+                    if (len(self.attitude_responses) % file_frequency == 0 and
+                        not len(self.attitude_responses) == 0):
+                        self._write_to_csv(self.attitude_responses,
+                                           location +
+                                           str(self.number_of_attitude_files) +
+                                           "attitude.csv")
+                        """Resets the vars
+                        """
                         self.number_of_attitude_files += 1
                         self.attitude_responses = []
-                        print("wrote att")
+
 
     def stop_listener(self):
+        """Stops the listener
+        """
         self.loop = False
         pass
 
 
-    def request_time(self):
+    def _request_time(self):
+        """Requests the time of the flight computer
+        """
         self.connection.mav.send(self.REQUEST_TIME_MESSAGE)
         while True:
+            """Receives the reponse
+            """
             self.response = self.connection.recv_match()
+            """Check if the response exists
+            """
             if (not self.response == None):
+                """Make sure the response is an imposter
+                """
                 if (self.response.get_type() == "SYSTEM_TIME"):
-                    print(self.response)
                     return self.response
 
                 
     def _determine_time_offset(self):
+        """Determines the time offset of the boot time and unix time
+        """
         self.request_time_response = self.request_time()
-        print("test")
         self.time_offset = (self.request_time_response.time_unix_usec * 
                             MICRO_TO_MILLI -
                             self.request_time_response.time_boot_ms)
 
     def _write_to_csv(self, l, filename):
+        """Writes to csv
+        l -- the data
+        filename -- The filename
+        """
+        """TODO: format the filename good (with leading zeros)
+        """
         with open(filename, mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerows(l)

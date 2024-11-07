@@ -27,6 +27,8 @@ async def main():
     file-format -- sets the file format (jpg, png, dng)
     number -- sets the number of pictures to take
               1 default, 0 -> infinite
+    verbose -- Print the times between each image
+    mavlink -- Enables sending mavlink messages
     """
     
     #Handle all the args stuff
@@ -49,19 +51,22 @@ async def main():
             '-m', "--mavlink", action='store_true')
     args = parser.parse_args()
     
-    #Set the settings from the args correctly
+    """Sets the file format
+    Default is jpg
+    """
     if (args.file_format not in VALID_FILE_TYPES and args.file_format != None):
         print("Invalid file format")
         return
-
     file_format = 'jpg'
     if (args.file_format != None):
         file_format = args.file_format
 
 
     
-    #kinda pointless code so then these vars are saved as true booleans
-    #rather than True or None
+    """kinda pointless code so then these vars are saved as 
+    non-imposter booleans rather than True or None
+    Maybe there is a better way to do it
+    """
     if (args.binning):
         binning = True
     else:
@@ -90,18 +95,23 @@ async def main():
 
 
 
-    #Handles the location settings
+    """Handles the location settings
+    """
     location = ''
     if (args.location != None):
         location = args.location
         save = True
 
 
-    #handles the iteration stuff, default is 1
+    """handles the number of pictures to take
+    Default is 1
+    """
     iterations = 1
     if (args.number != None):
         iterations = int(args.number)
 
+    """Creates the camera object using the args
+    """
     rpicam = Camera(
             binning=binning,
             save=save,
@@ -112,15 +122,18 @@ async def main():
             mavlink=mavlink_enabled)
 
 
+    """initialize and configures the camera
+    """
     rpicam.initialize_and_configure()
 
-    #Start the camera
+    """Start the camera
+    """
     rpicam.start()
 
-    print(iterations)
+    """Take the specified number of photos
+    """
     await rpicam.take_photos(iterations)
 
-# Run the main function
 if __name__ == "__main__":
     asyncio.run(main())
 
