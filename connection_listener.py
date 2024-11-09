@@ -146,14 +146,13 @@ class ConnectionListener:
                     if (not queue_bool):
                         self.gps_responses.append(self.temp_response)
 
-                """Puts the response in the queue if enabled
-                """
                 if (queue_bool):
+                    """Puts the response in the queue if enabled
+                    """
                     response_queue.put(self.temp_response)
-
-                """If the queue is not enabled, then save it to file
-                """
                 else:
+                    """If the queue is not enabled, then save it to file
+                    """
                     """Saves the file if there is the right number of responses
                     """
                     if (len(self.gps_responses) % file_frequency == 0 and 
@@ -206,7 +205,7 @@ class ConnectionListener:
     def _determine_time_offset(self):
         """Determines the time offset of the boot time and unix time
         """
-        self.request_time_response = self.request_time()
+        self.request_time_response = self._request_time()
         self.time_offset = (self.request_time_response.time_unix_usec * 
                             MICRO_TO_MILLI -
                             self.request_time_response.time_boot_ms)

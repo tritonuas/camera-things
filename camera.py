@@ -152,13 +152,13 @@ class Camera:
         """Initializes and configures the camera
         """
 
-        self.picam2 = self.initialize_camera()
+        self.picam2 = self._initialize_camera()
 
         """Set the appropirate camera config"""
         if (self.binning == True):
-            self.picam2.configure(self.select_2x2_binning(self.picam2))
+            self.picam2.configure(self._select_2x2_binning(self.picam2))
         else:
-            self.picam2.configure(self.select_full_res(self.picam2))
+            self.picam2.configure(self._select_full_res(self.picam2))
 
 
     def start(self):
@@ -217,8 +217,8 @@ class Camera:
                     """
                     if (self.mavlink_enabled):
                         await self.mavlink.request_attitude_and_position()
-                    self.capture_file(self.picam2, 
-                                 self.format_number(i, self.digits),
+                    self._capture_file(self.picam2, 
+                                 self._format_number(i, self.digits),
                                  self.file_format,
                                  self.location) 
 
@@ -245,11 +245,11 @@ class Camera:
                 i += 1
                 if (i == iterations):
                     break
-        """If KeyboardInterrupt is used to break the while True loop,
-        time data is still saved
-        So then time data can still be saved when Ctrl-C
-        """
         except KeyboardInterrupt:
+            """If KeyboardInterrupt is used to break the while True loop,
+            time data is still saved
+            So then time data can still be saved when Ctrl-C
+            """
             if (self.time):
                 self.timer.save_to_file(self.location)
                 print("saved to file")

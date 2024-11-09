@@ -59,7 +59,7 @@ class Mavlink:
         self.connection.wait_heartbeat()
         print("Heartbeat from system (system %u component %u)" % 
               (self.connection.target_system, self.connection.target_component))
-        self._determine_time_offset()
+        #self._determine_time_offset()
 
 
     async def get_attitude_and_position(self):
@@ -114,7 +114,7 @@ class Mavlink:
 
 
 
-    async def _determine_time_offset(self):
+    def _determine_time_offset(self):
         """Determines the time offset between unix time and time to boot
         TODO: see if this is really needed
         """
