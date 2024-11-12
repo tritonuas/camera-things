@@ -15,7 +15,7 @@ MICRO_TO_MILLI = 1000
 class Mavlink:
     
 
-    def __init__(self):
+    def __init__(self) -> None:
 
         """Start a connection on the serial0 port, with baud 57600
         """
@@ -62,7 +62,7 @@ class Mavlink:
         #self._determine_time_offset()
 
 
-    async def get_attitude_and_position(self):
+    async def get_attitude_and_position(self) -> None:
         """This function bad, don't use for now
         """
         self.listener = ConnectionListener(self.connection)
@@ -88,7 +88,7 @@ class Mavlink:
         return self.responses
         """
             
-    def start_getting_attitude_and_position(self, location):
+    def start_getting_attitude_and_position(self, location: str) -> None:
         """Starts the connection_listener in the background
         TODO: Make it so then it will actually take in arguments
         """
@@ -100,12 +100,12 @@ class Mavlink:
         """Starts the listener class
         """
         self.listener_task = asyncio.create_task(self.listener.start_listener(
-            queue_bool=False,
-            unix_time_bool=True,
+            use_queue=False,
+            use_unix_time=True,
             file_frequency=10,
             location=location))
 
-    async def request_attitude_and_position(self):
+    async def request_attitude_and_position(self) -> None:
         """Sends mavlink messages to request attitude and postion
         Use with start_getting_attitude_and_position to receive the responses
         """
@@ -114,7 +114,7 @@ class Mavlink:
 
 
 
-    def _determine_time_offset(self):
+    def _determine_time_offset(self) -> None:
         """Determines the time offset between unix time and time to boot
         TODO: see if this is really needed
         """

@@ -14,7 +14,7 @@ VALID_FILE_TYPES=[
         'dng']
 
 class Camera:
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         
 
         """Constructor for Camera class
@@ -62,13 +62,13 @@ class Camera:
 
 
 
-    async def _take_picture(self, cam):
+    async def _take_picture(self, cam: Picamera2) -> None:
         """Async take a picture and returns it as an array
         cam -- The picam2 object
         """
-        return cam.capture_array("main")
+        #return cam.capture_array("main")
 
-    async def _save_to_file(self, image_list, filename):
+    async def _save_to_file(self, image_list, filename) -> None:
         """Does nothing for now
         Later might be changed to send data over wifi or other interface
         and need it to be written to a var
@@ -76,29 +76,26 @@ class Camera:
 
         return
 
-    def _initialize_camera(self):
+    def _initialize_camera(self) -> Picamera2:
         """Initializes the camera and returns a 
         picam2 object ready to be configured
         """
-        picam2 = Picamera2()
-        return picam2
+        return Picamera2()
         
-    def _print_sensor_modes(self):
+    def _print_sensor_modes(self) -> None:
         """Prints the modes of the camera
         """
-        modes = picam2.sensor_modes
-        print(modes)
+        print(picam2.sensor_modes)
 
 
-    def _select_2x2_binning(self, picam2):
+    def _select_2x2_binning(self, picam2: Picamera2):
         """Returns the camera settings for 2x2 binning
         picam2 -- The picamera2 object
         """
 
         """Gets the 2x2 binning mode
         """
-        modes = picam2.sensor_modes
-        mode = modes[2]
+        mode = picam2.sensor_modes[2]
         camera_config = picam2.create_still_configuration(
                 {"size": mode['size']}, 
                 buffer_count=4,
@@ -106,9 +103,10 @@ class Camera:
                 sensor={'output_size': mode['size'],
                         'bit_depth': mode['bit_depth']})
 
+        print(type(camera_config))
         return camera_config
 
-    def _select_full_res(self, picam2):
+    def _select_full_res(self, picam2: Picamera2):
         """Returns the camera settings for rull resolution photos
         picam2 -- The picamera2 object
         """
@@ -121,7 +119,8 @@ class Camera:
 
         return camera_config
 
-    def _capture_file(self, picam2, iteration, file_format, location):
+    def _capture_file(self, picam2: Picamera2,
+                      iteration: int, file_format: str, location: str) -> None:
         """Captures a file and saves it to a file
 
         picam2 -- The picamera2 object
@@ -139,7 +138,7 @@ class Camera:
         else:
             picam2.capture_file(f"{location}{iteration}.{file_format}")
 
-    def _format_number(self, num, digits):
+    def _format_number(self, num: int, digits: int) -> str:
         """Formats the numbers correct
         Adds leadings zeros to the number to make stuff nicer
 
@@ -148,7 +147,7 @@ class Camera:
         """
         return f"{num:0{digits}d}"
 
-    def initialize_and_configure(self):
+    def initialize_and_configure(self) -> None:
         """Initializes and configures the camera
         """
 
@@ -182,7 +181,7 @@ class Camera:
     def _enable_auto_exposure(self):
         self.picam2.set_controls({"AeEnable": True})
 
-    def start(self):
+    def start(self) -> None:
         """Start the camera
         """
         self.picam2.start()
@@ -190,13 +189,13 @@ class Camera:
 
 
 
-    def take_photo(self):
+    def take_photo(self) -> None:
         """Take a single photo
         """
         self.take_photos(1)
 
 
-    async def take_photos(self, iterations):
+    async def take_photos(self, iterations: int) -> None:
         """Takes multiple photos
         iterations -- The number of photos to take
         """
@@ -273,11 +272,9 @@ class Camera:
             """
             if (self.time):
                 self.timer.save_to_file(self.location)
-                print("saved to file")
             return
 
         """If the loop ends naturally, then log the time
         """
         if (self.time):
             self.timer.save_to_file(self.location)
-            print("saved to file")
