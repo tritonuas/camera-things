@@ -51,7 +51,7 @@ class timeLogging:
             self.time_since_last_log, 
             self.time_since_start])
     
-    def save_to_file(self, string: location) -> None:
+    def save_to_file(self, location: str) -> None:
         """Saves the logged data to a file named times.csv
         """
         try:

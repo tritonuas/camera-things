@@ -185,7 +185,7 @@ class ConnectionListener:
         pass
 
 
-    def _request_time(self) -> None:
+    def _request_time(self) -> "pymavlink.mavutil.mavserial":
         """Requests the time of the flight computer
         """
         self.connection.mav.send(self.REQUEST_TIME_MESSAGE)

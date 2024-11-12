@@ -21,7 +21,6 @@ class Mavlink:
         """
         self.connection = mavutil.mavlink_connection('/dev/serial0',
                                                      baud=57600)
-        print(type(connection))
         """The mavlink messages to request attitude and GPS and time
         """
         self.REQUEST_ATTITUDE_MESSAGE = self.connection.mav.command_long_encode(
@@ -101,8 +100,8 @@ class Mavlink:
         """Starts the listener class
         """
         self.listener_task = asyncio.create_task(self.listener.start_listener(
-            queue_bool=False,
-            unix_time_bool=True,
+            use_queue=False,
+            use_unix_time=True,
             file_frequency=10,
             location=location))
 
