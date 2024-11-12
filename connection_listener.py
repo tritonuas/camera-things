@@ -39,7 +39,7 @@ DICT_ELEMENTS_GPS = [
 
 class ConnectionListener:
 
-    def __init__(self, connection):
+    def __init__(self, connection) -> None:
         """Constructor for ConnectionListener class
         connection -- The mavlink connection
         """
@@ -66,18 +66,18 @@ class ConnectionListener:
         
 
     async def start_listener(self,
-                             queue_bool,
-                             unix_time_bool,
-                             file_frequency,
-                             location):
+                             use_queue: bool,
+                             use_unix_time: bool,
+                             file_frequency: int,
+                             location: str) -> None:
 
         """Starts the listener
         This receices mavlink responses and writes it to a file or puts it
         in the queue
 
-        queue_bool -- whether to put the response in the queue or save it to
+        use_queue -- whether to put the response in the queue or save it to
                         a file
-        unix_time_bool -- Whether to also save the unix time along with the
+        use_unix_time -- Whether to also save the unix time along with the
                             boot time
         file_frequency -- How frequently to save the mavlink data to a file
         location -- The location to save the file
@@ -112,7 +112,7 @@ class ConnectionListener:
                 
                 """Add the unix time if enabled
                 """
-                if (unix_time_bool):
+                if (use_unix_time):
                     self.temp_response = []
                     self.temp_response.append(
                             self.response.time_boot_ms +
@@ -129,7 +129,7 @@ class ConnectionListener:
                     self.temp_response.append(self.response.rollspeed)
                     self.temp_response.append(self.response.pitchspeed)
                     self.temp_response.append(self.response.yawspeed)
-                    if (not queue_bool):
+                    if (not use_queue):
                         self.attitude_responses.append(self.temp_response)
 
                 """If the response is GPS, then save that data
@@ -143,10 +143,10 @@ class ConnectionListener:
                     self.temp_response.append(self.response.vx)
                     self.temp_response.append(self.response.vy)
                     self.temp_response.append(self.response.hdg)
-                    if (not queue_bool):
+                    if (not use_queue):
                         self.gps_responses.append(self.temp_response)
 
-                if (queue_bool):
+                if (use_queue):
                     """Puts the response in the queue if enabled
                     """
                     response_queue.put(self.temp_response)
@@ -178,14 +178,14 @@ class ConnectionListener:
                         self.attitude_responses = []
 
 
-    def stop_listener(self):
+    def stop_listener(self) -> None:
         """Stops the listener
         """
         self.loop = False
         pass
 
 
-    def _request_time(self):
+    def _request_time(self) -> None:
         """Requests the time of the flight computer
         """
         self.connection.mav.send(self.REQUEST_TIME_MESSAGE)
@@ -199,10 +199,11 @@ class ConnectionListener:
                 """Make sure the response is an imposter
                 """
                 if (self.response.get_type() == "SYSTEM_TIME"):
+                    print(type(self.response))
                     return self.response
 
                 
-    def _determine_time_offset(self):
+    def _determine_time_offset(self) -> None:
         """Determines the time offset of the boot time and unix time
         """
         self.request_time_response = self._request_time()
@@ -210,7 +211,7 @@ class ConnectionListener:
                             MICRO_TO_MILLI -
                             self.request_time_response.time_boot_ms)
 
-    def _write_to_csv(self, l, filename):
+    def _write_to_csv(self, l: list, filename: str) -> None:
         """Writes to csv
         l -- the data
         filename -- The filename
