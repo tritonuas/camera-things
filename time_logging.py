@@ -5,7 +5,7 @@ import csv
 class timeLogging:
 
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Inits the class, and sets the nessicary vars
         """
         self.intergral = 0
@@ -13,7 +13,7 @@ class timeLogging:
         self.log_list = []
         self.previous_log_time = self.start_time
     
-    def start_timer(self):
+    def start_timer(self) -> None:
         """Starts the timer
         Can also be run again to reset and start the timer again
         """
@@ -35,7 +35,7 @@ class timeLogging:
             self.time_since_last_log, 
             self.time_since_start])
 
-    def log_and_print(self):
+    def log_and_print(self) -> None:
         """Takes the time data from the time that the function is run and logs
         the data, including the current time, the time since it was run and
         the time since the last iteration, and also prints the time since
@@ -51,7 +51,7 @@ class timeLogging:
             self.time_since_last_log, 
             self.time_since_start])
     
-    def save_to_file(self, location):
+    def save_to_file(self, location: str) -> None:
         """Saves the logged data to a file named times.csv
         """
         try:

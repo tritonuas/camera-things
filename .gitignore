@@ -41,3 +41,11 @@ out/
 b_remove*
 testing_out*
 remove_test*
+venv
+venv.sh
+__pycache__
+*py~
+*.swp
+.venv
+*~
+out*
