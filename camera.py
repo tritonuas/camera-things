@@ -159,6 +159,37 @@ class Camera:
         else:
             self.picam2.configure(self._select_full_res(self.picam2))
 
+    def lock_controls(self) -> None:
+        """Disables automatic white balance and exposure settings
+        """
+        self._disable_auto_while_balance()
+        self._disable_auto_exposure()
+
+    def unlock_controls(self) -> None:
+        """Enables automatic white balance and exposure settings
+        """
+        self._enable_auto_while_balance()
+        self._enable_auto_exposure()
+
+    def _disable_auto_while_balance(self) -> None:
+        """Disables automatic white balance
+        """
+        self.picam2.set_controls({"AwbEnable": False})
+
+    def _disable_auto_exposure(self) -> None:
+        """Disables automatic exposure settings
+        """
+        self.picam2.set_controls({"AeEnable": False})
+
+    def _enable_auto_while_balance(self) -> None:
+        """Enables automatic while balance
+        """
+        self.picam2.set_controls({"AwbEnable": True})
+
+    def _enable_auto_exposure(self) -> None:
+        """Enables automatic exposure settings
+        """
+        self.picam2.set_controls({"AeEnable": True})
 
     def start(self) -> None:
         """Start the camera
