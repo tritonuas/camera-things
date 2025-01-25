@@ -1,0 +1,3 @@
+/home/tuas/camera-things/CMakeFiles/simple-cam.dir
+/home/tuas/camera-things/CMakeFiles/edit_cache.dir
+/home/tuas/camera-things/CMakeFiles/rebuild_cache.dir

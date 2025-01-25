@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Werror -Wno-unused-parameter "CMakeFiles/simple-cam.dir/simple-cam.cpp.o" "CMakeFiles/simple-cam.dir/event_loop.cpp.o" -o simple-cam  /usr/lib/aarch64-linux-gnu/libevent_pthreads.so /usr/lib/aarch64-linux-gnu/libevent.so /usr/lib/aarch64-linux-gnu/libcamera.so /usr/lib/aarch64-linux-gnu/libcamera-base.so 
