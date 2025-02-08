@@ -22,6 +22,9 @@ static EventLoop loop;
 
 static int j = 0;
 
+
+std::lock_guard m;
+
 /*
  * --------------------------------------------------------------------
  * Handles and processes the request
@@ -40,6 +43,9 @@ static void requestComplete(Request *request) {
 }
 
 static void saveImage(FrameBuffer *buffer) {
+
+    {
+        boost::scoped_lock lock(mutex);
 
         for (size_t i = 0; i < buffer->planes().size(); ++i) {
             const FrameBuffer::Plane &plane = buffer->planes()[i];
@@ -76,7 +82,8 @@ static void saveImage(FrameBuffer *buffer) {
 
             // Unmap the memory
             munmap(mappedMemory, length);
-	    }
+        }
+    }
 }
 
 
