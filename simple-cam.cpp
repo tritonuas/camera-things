@@ -39,50 +39,7 @@ static void requestComplete(Request *request) {
 	loop.callLater(std::bind(&processRequest, request));
 }
 
-static void processRequest(Request *request) {
-	std::cout << std::endl
-		  << "Request completed: " << request->toString() << std::endl;
-
-	/*
-     * meta data stuff
-	 */
-	const ControlList &requestMetadata = request->metadata();
-	for (const auto &ctrl : requestMetadata) {
-		const ControlId *id = controls::controls.at(ctrl.first);
-		const ControlValue &value = ctrl.second;
-
-		std::cout << "\t" << id->name() << " = " << value.toString()
-			  << std::endl;
-	}
-
-	/*
-     * Buffer info
-	 */
-	const Request::BufferMap &buffers = request->buffers();
-	for (auto bufferPair : buffers) {
-		// (Unused) Stream *stream = bufferPair.first;
-		FrameBuffer *buffer = bufferPair.second;
-		const FrameMetadata &metadata = buffer->metadata();
-		std::cout << "\n";
-		std::cout << buffer;
-
-		/* Print some information about the buffer which has completed. */
-		std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
-			  << " timestamp: " << metadata.timestamp
-			  << " bytesused: ";
-
-		unsigned int nplane = 0;
-		for (const FrameMetadata::Plane &plane : metadata.planes())
-		{
-			std::cout << plane.bytesused;
-			if (++nplane < metadata.planes().size()) {
-				std::cout << "/";
-            }
-		}
-
-		/*
-         * Get image data
-		 */
+static void saveImage(FrameBuffer *buffer) {
 
         for (size_t i = 0; i < buffer->planes().size(); ++i) {
             const FrameBuffer::Plane &plane = buffer->planes()[i];
@@ -117,12 +74,54 @@ static void processRequest(Request *request) {
             std::cout << "Plane " << j << " saved to output_plane" << j << ".raw" << std::endl;
             j++;
 
-
             // Unmap the memory
             munmap(mappedMemory, length);
 	    }
+}
 
 
+
+static void processRequest(Request *request) {
+	std::cout << std::endl
+		  << "Request completed: " << request->toString() << std::endl;
+
+	/*
+     * meta data stuff
+	 */
+	const ControlList &requestMetadata = request->metadata();
+	for (const auto &ctrl : requestMetadata) {
+		const ControlId *id = controls::controls.at(ctrl.first);
+		const ControlValue &value = ctrl.second;
+
+		std::cout << "\t" << id->name() << " = " << value.toString()
+			  << std::endl;
+	}
+
+	/*
+     * Buffer info
+	 */
+	const Request::BufferMap &buffers = request->buffers();
+	for (auto bufferPair : buffers) {
+		// (Unused) Stream *stream = bufferPair.first;
+		FrameBuffer *buffer = bufferPair.second;
+		const FrameMetadata &metadata = buffer->metadata();
+		std::cout << "\n";
+		std::cout << buffer;
+
+		/* Print some information about the buffer which has completed. */
+		std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
+			  << " timestamp: " << metadata.timestamp
+			  << " bytesused: ";
+
+		unsigned int nplane = 0;
+		for (const FrameMetadata::Plane &plane : metadata.planes()) {
+			std::cout << plane.bytesused;
+			if (++nplane < metadata.planes().size()) {
+				std::cout << "/";
+            }
+		}
+        
+        saveImage(buffer);
     }
 
     /* Re-queue the Request to the camera. */
