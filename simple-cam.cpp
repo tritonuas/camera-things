@@ -23,7 +23,7 @@ static EventLoop loop;
 static int j = 0;
 
 
-std::lock_guard m;
+std::lock_guard mutex;
 
 /*
  * --------------------------------------------------------------------
