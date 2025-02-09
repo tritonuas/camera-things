@@ -7,13 +7,19 @@
 #include <fstream>
 #include <vector>
 #include <string>
-
+#include <thread>
+#include <list>
+#include <algorithm>
+#include <mutex>
+#include <chrono>
+#include <ctime>
 
 #include <libcamera/libcamera.h>
 
 #include "event_loop.h"
 
 #define TIMEOUT_SEC 3
+#define BUFFER_COUNT 3
 
 using namespace libcamera;
 static std::shared_ptr<Camera> camera;
@@ -23,7 +29,8 @@ static EventLoop loop;
 static int j = 0;
 
 
-std::lock_guard mutex;
+std::mutex mutex;
+
 
 /*
  * --------------------------------------------------------------------
@@ -42,48 +49,85 @@ static void requestComplete(Request *request) {
 	loop.callLater(std::bind(&processRequest, request));
 }
 
-static void saveImage(FrameBuffer *buffer) {
+static void saveImage(Request *request) {
 
-    {
-        boost::scoped_lock lock(mutex);
 
-        for (size_t i = 0; i < buffer->planes().size(); ++i) {
-            const FrameBuffer::Plane &plane = buffer->planes()[i];
-            int fd = plane.fd.get();   // File descriptor for the plane
-            size_t length = plane.length; // Length of the plane data
-            off_t offset = plane.offset;  // Offset within the file descriptor
+	mutex.lock();
 
-            // Map the plane memory
-            void *mappedMemory = mmap(nullptr,
-                    length,
-                    PROT_READ | PROT_WRITE,
-                    MAP_SHARED,
-                    fd, offset);
-            if (mappedMemory == MAP_FAILED) {
-                perror("mmap failed");
-                return;
+
+
+	/*
+     * Buffer info
+	 */
+	const Request::BufferMap &buffers = request->buffers();
+	for (auto bufferPair : buffers) {
+
+		auto t1 = high_resolution_clock::now();
+		// (Unused) Stream *stream = bufferPair.first;
+		FrameBuffer *buffer = bufferPair.second;
+		const FrameMetadata &metadata = buffer->metadata();
+		std::cout << "\n";
+		std::cout << buffer;
+
+		/* Print some information about the buffer which has completed. */
+		std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
+			  << " timestamp: " << metadata.timestamp
+			  << " bytesused: ";
+
+		unsigned int nplane = 0;
+		for (const FrameMetadata::Plane &plane : metadata.planes()) {
+			std::cout << plane.bytesused;
+			if (++nplane < metadata.planes().size()) {
+				std::cout << "/";
             }
+		}
+        
+		for (size_t i = 0; i < buffer->planes().size(); ++i) {
+			const FrameBuffer::Plane &plane = buffer->planes()[i];
+			int fd = plane.fd.get();   // File descriptor for the plane
+			size_t length = plane.length; // Length of the plane data
+			off_t offset = plane.offset;  // Offset within the file descriptor
 
-            std::cout << "Buffer planes: " << buffer->planes().size() << std::endl;
-            for (size_t i = 0; i < buffer->planes().size(); ++i) {
-                const FrameBuffer::Plane &plane = buffer->planes()[i];
-                std::cout << "Plane " << i << ": fd=" << plane.fd.get()
-                 << ", length=" << plane.length
-                 << ", offset=" << plane.offset << std::endl;
-            }	
-            // Save the mapped memory to a file
-            std::ofstream file("out/output_plane" + std::to_string(j) + ".raw", std::ios::binary);
-            std::cout << length;
-            file.write(static_cast<char *>(mappedMemory), length);
-            file.close();
+			// Map the plane memory
+			void *mappedMemory = mmap(nullptr,
+					length,
+					PROT_READ | PROT_WRITE,
+					MAP_SHARED,
+					fd, offset);
+			if (mappedMemory == MAP_FAILED) {
+				perror("mmap failed");
+				return;
+			}
 
-            std::cout << "Plane " << j << " saved to output_plane" << j << ".raw" << std::endl;
-            j++;
+			std::cout << "Buffer planes: " << buffer->planes().size() << std::endl;
+			for (size_t i = 0; i < buffer->planes().size(); ++i) {
+				const FrameBuffer::Plane &plane = buffer->planes()[i];
+				std::cout << "Plane " << i << ": fd=" << plane.fd.get()
+				 << ", length=" << plane.length
+				 << ", offset=" << plane.offset << std::endl;
+			}	
+			// Save the mapped memory to a file
+			std::ofstream file("out/output_plane" + std::to_string(j) + ".raw", std::ios::binary);
+			std::cout << length;
+			file.write(static_cast<char *>(mappedMemory), length);
+			file.close();
 
-            // Unmap the memory
-            munmap(mappedMemory, length);
-        }
+			std::cout << "Plane " << j << " saved to output_plane" << j << ".raw" << std::endl;
+			j++;
+
+			// Unmap the memory
+			munmap(mappedMemory, length);
+		}
+
     }
+
+	mutex.unlock();
+
+    /* Re-queue the Request to the camera. */
+    request->reuse(Request::ReuseBuffers);
+    camera->queueRequest(request);
+
+	
 }
 
 
@@ -104,36 +148,8 @@ static void processRequest(Request *request) {
 			  << std::endl;
 	}
 
-	/*
-     * Buffer info
-	 */
-	const Request::BufferMap &buffers = request->buffers();
-	for (auto bufferPair : buffers) {
-		// (Unused) Stream *stream = bufferPair.first;
-		FrameBuffer *buffer = bufferPair.second;
-		const FrameMetadata &metadata = buffer->metadata();
-		std::cout << "\n";
-		std::cout << buffer;
+	saveImage(request);
 
-		/* Print some information about the buffer which has completed. */
-		std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
-			  << " timestamp: " << metadata.timestamp
-			  << " bytesused: ";
-
-		unsigned int nplane = 0;
-		for (const FrameMetadata::Plane &plane : metadata.planes()) {
-			std::cout << plane.bytesused;
-			if (++nplane < metadata.planes().size()) {
-				std::cout << "/";
-            }
-		}
-        
-        saveImage(buffer);
-    }
-
-    /* Re-queue the Request to the camera. */
-    request->reuse(Request::ReuseBuffers);
-    camera->queueRequest(request);
 }
 
 /*
@@ -201,7 +217,7 @@ int main()
      * Config the camera
 	 */
 	std::unique_ptr<CameraConfiguration> config =
-		camera->generateConfiguration( { StreamRole::Raw, StreamRole::Raw } );
+		camera->generateConfiguration( { StreamRole::Raw } );
 
 	/*
      * Config the stream
