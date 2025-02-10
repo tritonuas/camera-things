@@ -18,7 +18,7 @@
 
 #include "event_loop.h"
 
-#define TIMEOUT_SEC 3
+#define TIMEOUT_SEC 10000
 #define BUFFER_COUNT 3
 
 using namespace libcamera;
@@ -29,7 +29,9 @@ static EventLoop loop;
 static int j = 0;
 
 
-std::mutex mutex;
+
+static std::mutex mutex;
+static int test_increment = 0;
 
 
 /*
@@ -44,44 +46,58 @@ static void processRequest(Request *request);
 static void requestComplete(Request *request) {
 	if (request->status() == Request::RequestCancelled) {
 		return;
-    }
+	}
 
 	loop.callLater(std::bind(&processRequest, request));
 }
 
 static void saveImage(Request *request) {
 
+	std::cout << std::endl
+		<< "Queued Request: " << request->toString() << std::endl;
 
 	mutex.lock();
-
-
-
+	//std::this_thread::sleep_for (std::chrono::seconds(1));
+	std::cout << std::endl
+		<< "Processing Request: " << request->toString() << std::endl;
+	std::cout << "saveImage Counter: " << test_increment;
+	test_increment++;
 	/*
-     * Buffer info
+	 * Buffer info
 	 */
 	const Request::BufferMap &buffers = request->buffers();
 	for (auto bufferPair : buffers) {
 
-		auto t1 = high_resolution_clock::now();
 		// (Unused) Stream *stream = bufferPair.first;
 		FrameBuffer *buffer = bufferPair.second;
-		const FrameMetadata &metadata = buffer->metadata();
+		//const FrameMetadata &metadata = buffer->metadata();
 		std::cout << "\n";
-		std::cout << buffer;
+		//std::cout << buffer;
 
 		/* Print some information about the buffer which has completed. */
-		std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
-			  << " timestamp: " << metadata.timestamp
-			  << " bytesused: ";
+		/*
+		   std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
+		   << " timestamp: " << metadata.timestamp
+		   << " bytesused: ";
 
 		unsigned int nplane = 0;
 		for (const FrameMetadata::Plane &plane : metadata.planes()) {
 			std::cout << plane.bytesused;
 			if (++nplane < metadata.planes().size()) {
 				std::cout << "/";
-            }
+			}
 		}
-        
+		*/
+
+		/*
+		std::cout << "Buffer planes: " << buffer->planes().size() << std::endl;
+		for (size_t i = 0; i < buffer->planes().size(); ++i) {
+			const FrameBuffer::Plane &plane = buffer->planes()[i];
+			std::cout << "Plane " << i << ": fd=" << plane.fd.get()
+				<< ", length=" << plane.length
+				<< ", offset=" << plane.offset << std::endl;
+		}	
+		*/
 		for (size_t i = 0; i < buffer->planes().size(); ++i) {
 			const FrameBuffer::Plane &plane = buffer->planes()[i];
 			int fd = plane.fd.get();   // File descriptor for the plane
@@ -99,57 +115,54 @@ static void saveImage(Request *request) {
 				return;
 			}
 
-			std::cout << "Buffer planes: " << buffer->planes().size() << std::endl;
-			for (size_t i = 0; i < buffer->planes().size(); ++i) {
-				const FrameBuffer::Plane &plane = buffer->planes()[i];
-				std::cout << "Plane " << i << ": fd=" << plane.fd.get()
-				 << ", length=" << plane.length
-				 << ", offset=" << plane.offset << std::endl;
-			}	
 			// Save the mapped memory to a file
 			std::ofstream file("out/output_plane" + std::to_string(j) + ".raw", std::ios::binary);
-			std::cout << length;
+			//std::cout << length;
 			file.write(static_cast<char *>(mappedMemory), length);
 			file.close();
 
-			std::cout << "Plane " << j << " saved to output_plane" << j << ".raw" << std::endl;
+			//std::cout << "Plane " << j << " saved to output_plane" << j << ".raw" << std::endl;
 			j++;
 
 			// Unmap the memory
 			munmap(mappedMemory, length);
 		}
 
-    }
+	}
 
+
+
+	/* Re-queue the Request to the camera. */
+	std::cout << std::endl
+		<< "Finished Processing Request: " << request->toString() << std::endl;
+	request->reuse(Request::ReuseBuffers);
+	camera->queueRequest(request);
 	mutex.unlock();
 
-    /* Re-queue the Request to the camera. */
-    request->reuse(Request::ReuseBuffers);
-    camera->queueRequest(request);
-
-	
 }
 
 
 
 static void processRequest(Request *request) {
 	std::cout << std::endl
-		  << "Request completed: " << request->toString() << std::endl;
+		<< "Request completed: " << request->toString() << std::endl;
 
 	/*
-     * meta data stuff
+	 * meta data stuff
 	 */
-	const ControlList &requestMetadata = request->metadata();
-	for (const auto &ctrl : requestMetadata) {
-		const ControlId *id = controls::controls.at(ctrl.first);
-		const ControlValue &value = ctrl.second;
+	/*
+	   const ControlList &requestMetadata = request->metadata();
+	   for (const auto &ctrl : requestMetadata) {
+	   const ControlId *id = controls::controls.at(ctrl.first);
+	   const ControlValue &value = ctrl.second;
 
-		std::cout << "\t" << id->name() << " = " << value.toString()
-			  << std::endl;
-	}
+	   std::cout << "\t" << id->name() << " = " << value.toString()
+	   << std::endl;
+	   }
+	 */
 
-	saveImage(request);
-
+	std::thread saveThread(saveImage, request);
+	saveThread.detach();
 }
 
 /*
@@ -163,18 +176,18 @@ std::string cameraName(Camera *camera)
 	const auto &location = props.get(properties::Location);
 	if (location) {
 		switch (*location) {
-		case properties::CameraLocationFront:
-			name = "Internal front camera";
-			break;
-		case properties::CameraLocationBack:
-			name = "Internal back camera";
-			break;
-		case properties::CameraLocationExternal:
-			name = "External camera";
-			const auto &model = props.get(properties::Model);
-			if (model)
-				name = " '" + *model + "'";
-			break;
+			case properties::CameraLocationFront:
+				name = "Internal front camera";
+				break;
+			case properties::CameraLocationBack:
+				name = "Internal back camera";
+				break;
+			case properties::CameraLocationExternal:
+				name = "External camera";
+				const auto &model = props.get(properties::Model);
+				if (model)
+					name = " '" + *model + "'";
+				break;
 		}
 	}
 
@@ -199,11 +212,11 @@ int main()
 		std::cout << " - " << cameraName(camera.get()) << std::endl;
 
 	/*
-     * Get the camera thing
+	 * Get the camera thing
 	 */
 	if (cm->cameras().empty()) {
 		std::cout << "No cameras were identified on the system."
-			  << std::endl;
+			<< std::endl;
 		cm->stop();
 		return EXIT_FAILURE;
 	}
@@ -214,21 +227,21 @@ int main()
 
 
 	/*
-     * Config the camera
+	 * Config the camera
 	 */
 	std::unique_ptr<CameraConfiguration> config =
 		camera->generateConfiguration( { StreamRole::Raw } );
 
 	/*
-     * Config the stream
+	 * Config the stream
 	 */
 	StreamConfiguration &streamConfig = config->at(0);
 	std::cout << "Default Raw configuration is: "
-		  << streamConfig.toString() << std::endl;
-	streamConfig.bufferCount = 3;
+		<< streamConfig.toString() << std::endl;
+	streamConfig.bufferCount = BUFFER_COUNT;
 
 	streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("YUV420");
-	
+
 	std::cout << "pixelFormat" << streamConfig.pixelFormat.toString();
 
 
@@ -258,7 +271,7 @@ int main()
 	 */
 	config->validate();
 	std::cout << "Validated viewfinder configuration is: "
-		  << streamConfig.toString() << std::endl;
+		<< streamConfig.toString() << std::endl;
 
 	/*
 	 * Once we have a validated configuration, we can apply it to the
@@ -334,7 +347,7 @@ int main()
 		if (ret < 0)
 		{
 			std::cerr << "Can't set buffer for request"
-				  << std::endl;
+				<< std::endl;
 			return EXIT_FAILURE;
 		}
 
@@ -382,6 +395,8 @@ int main()
 	camera->start();
 	for (std::unique_ptr<Request> &request : requests) {
 
+		std::cout << std::endl
+			<< "Added Request: " << request->toString() << std::endl;
 		camera->queueRequest(request.get());
 	}
 
@@ -395,7 +410,7 @@ int main()
 	loop.timeout(TIMEOUT_SEC);
 	int ret = loop.exec();
 	std::cout << "Capture ran for " << TIMEOUT_SEC << " seconds and "
-		  << "stopped with exit status: " << ret << std::endl;
+		<< "stopped with exit status: " << ret << std::endl;
 
 	/*
 	 * --------------------------------------------------------------------
