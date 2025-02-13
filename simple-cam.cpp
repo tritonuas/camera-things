@@ -17,6 +17,7 @@
 #include <libcamera/libcamera.h>
 
 #include "event_loop.h"
+#include "mavlink.hpp"
 
 #define TIMEOUT_SEC 10000
 #define BUFFER_COUNT 3
@@ -32,6 +33,7 @@ static int j = 0;
 
 static std::mutex mutex;
 static int test_increment = 0;
+//static int mode = 0;
 
 
 /*
@@ -70,12 +72,11 @@ static void saveImage(Request *request) {
 
 		// (Unused) Stream *stream = bufferPair.first;
 		FrameBuffer *buffer = bufferPair.second;
-		//const FrameMetadata &metadata = buffer->metadata();
+		const FrameMetadata &metadata = buffer->metadata();
 		std::cout << "\n";
 		//std::cout << buffer;
 
 		/* Print some information about the buffer which has completed. */
-		/*
 		   std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
 		   << " timestamp: " << metadata.timestamp
 		   << " bytesused: ";
@@ -87,9 +88,7 @@ static void saveImage(Request *request) {
 				std::cout << "/";
 			}
 		}
-		*/
 
-		/*
 		std::cout << "Buffer planes: " << buffer->planes().size() << std::endl;
 		for (size_t i = 0; i < buffer->planes().size(); ++i) {
 			const FrameBuffer::Plane &plane = buffer->planes()[i];
@@ -97,7 +96,7 @@ static void saveImage(Request *request) {
 				<< ", length=" << plane.length
 				<< ", offset=" << plane.offset << std::endl;
 		}	
-		*/
+
 		for (size_t i = 0; i < buffer->planes().size(); ++i) {
 			const FrameBuffer::Plane &plane = buffer->planes()[i];
 			int fd = plane.fd.get();   // File descriptor for the plane
@@ -112,6 +111,7 @@ static void saveImage(Request *request) {
 					fd, offset);
 			if (mappedMemory == MAP_FAILED) {
 				perror("mmap failed");
+				mutex.unlock();
 				return;
 			}
 

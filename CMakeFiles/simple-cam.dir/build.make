@@ -108,6 +108,7 @@ simple__cam_EXTERNAL_OBJECTS =
 simple-cam: CMakeFiles/simple-cam.dir/simple-cam.cpp.o
 simple-cam: CMakeFiles/simple-cam.dir/event_loop.cpp.o
 simple-cam: CMakeFiles/simple-cam.dir/build.make
+simple-cam: /usr/lib/libmavsdk.so.3.0.0
 simple-cam: /usr/lib/aarch64-linux-gnu/libevent_pthreads.so
 simple-cam: /usr/lib/aarch64-linux-gnu/libevent.so
 simple-cam: /usr/lib/aarch64-linux-gnu/libcamera.so

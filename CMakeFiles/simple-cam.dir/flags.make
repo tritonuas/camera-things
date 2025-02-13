@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/tuas/camera-things -isystem /usr/include/libcamera
+CXX_INCLUDES = -I/home/tuas/camera-things -isystem /usr/include/libcamera -isystem /usr/include/mavsdk
 
 CXX_FLAGS = -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Werror -Wno-unused-parameter -std=gnu++17
 
