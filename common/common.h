@@ -10,7 +10,7 @@
     #error Wrong include order: MAVLINK_COMMON.H MUST NOT BE DIRECTLY USED. Include mavlink.h from the same directory instead or set ALL AND EVERY defines from MAVLINK.H manually accordingly, including the #define MAVLINK_H call.
 #endif
 
-#define MAVLINK_COMMON_XML_HASH 2051751675424454637
+#define MAVLINK_COMMON_XML_HASH -5222659914288642481
 
 #ifdef __cplusplus
 extern "C" {
@@ -854,7 +854,7 @@ typedef enum MAV_CMD
           Request the interval between messages for a particular MAVLink message ID.
           The receiver should ACK the command and then emit its response in a MESSAGE_INTERVAL message.
          |The MAVLink message ID| Reserved (default:0)| Reserved (default:0)| Reserved (default:0)| Reserved (default:0)| Reserved (default:0)| Reserved (default:0)|  */
-   MAV_CMD_SET_MESSAGE_INTERVAL=511, /* Set the interval between messages for a particular MAVLink message ID. This interface replaces REQUEST_DATA_STREAM. |The MAVLink message ID| The interval between two messages. -1: disable. 0: request default rate (which may be zero).| Use for index ID, if required. Otherwise, the use of this parameter (if any) must be defined in the requested message. By default assumed not used (0).| The use of this parameter (if any), must be defined in the requested message. By default assumed not used (0).| The use of this parameter (if any), must be defined in the requested message. By default assumed not used (0).| The use of this parameter (if any), must be defined in the requested message. By default assumed not used (0).| Target address of message stream (if message has target address fields). 0: Flight-stack default (recommended), 1: address of requestor, 2: broadcast.|  */
+   MAV_CMD_SET_MESSAGE_INTERVAL=511, /* Set the interval between messages for a particular MAVLink message ID. This interface replaces REQUEST_DATA_STREAM. |The MAVLink message ID| The interval between two messages. -1: disable. 0: request default rate (which may be zero).| Use for index ID, if required. Otherwise, the use of this parameter (if any) must be defined in the requested message. By default assumed not used (0).  When used as an index ID, 0 means "all instances", "1" means the first instance in the sequence (the emitted message will have an id of 0 if message ids are 0-indexed, or 1 if index numbers start from one).| The use of this parameter (if any), must be defined in the requested message. By default assumed not used (0).| The use of this parameter (if any), must be defined in the requested message. By default assumed not used (0/NaN).| The use of this parameter (if any), must be defined in the requested message. By default assumed not used (0/NaN).| Target address of message stream (if message has target address fields). 0: Flight-stack default (recommended), 1: address of requestor, 2: broadcast.|  */
    MAV_CMD_REQUEST_MESSAGE=512, /* Request the target system(s) emit a single instance of a specified message (i.e. a "one-shot" version of MAV_CMD_SET_MESSAGE_INTERVAL). |The MAVLink message ID of the requested message.| Use for index ID, if required. Otherwise, the use of this parameter (if any) must be defined in the requested message. By default assumed not used (0).| The use of this parameter (if any), must be defined in the requested message. By default assumed not used (0).| The use of this parameter (if any), must be defined in the requested message. By default assumed not used (0).| The use of this parameter (if any), must be defined in the requested message. By default assumed not used (0).| The use of this parameter (if any), must be defined in the requested message. By default assumed not used (0).| Target address for requested message (if message has target address fields). 0: Flight-stack default, 1: address of requestor, 2: broadcast.|  */
    MAV_CMD_REQUEST_PROTOCOL_VERSION=519, /* Request MAVLink protocol version compatibility. All receivers should ACK the command and then emit their capabilities in an PROTOCOL_VERSION message |1: Request supported protocol versions by all nodes on the network| Reserved (all remaining params)| Reserved (default:0)| Reserved (default:0)| Reserved (default:0)| Reserved (default:0)| Reserved (default:0)|  */
    MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES=520, /* Request autopilot capabilities. The receiver should ACK the command and then emit its capabilities in an AUTOPILOT_VERSION message |1: Request autopilot version| Reserved (all remaining params)| Reserved (default:0)| Reserved (default:0)| Reserved (default:0)| Reserved (default:0)| Reserved (default:0)|  */
@@ -2883,7 +2883,6 @@ typedef enum MAV_MODE_PROPERTY
 #include "./mavlink_msg_command_ack.h"
 #include "./mavlink_msg_command_cancel.h"
 #include "./mavlink_msg_manual_setpoint.h"
-#include "./mavlink_msg_set_attitude_target.h"
 #include "./mavlink_msg_attitude_target.h"
 #include "./mavlink_msg_set_position_target_local_ned.h"
 #include "./mavlink_msg_position_target_local_ned.h"
@@ -2926,7 +2925,6 @@ typedef enum MAV_MODE_PROPERTY
 #include "./mavlink_msg_scaled_imu3.h"
 #include "./mavlink_msg_data_transmission_handshake.h"
 #include "./mavlink_msg_encapsulated_data.h"
-#include "./mavlink_msg_distance_sensor.h"
 #include "./mavlink_msg_terrain_request.h"
 #include "./mavlink_msg_terrain_data.h"
 #include "./mavlink_msg_terrain_check.h"
@@ -2940,9 +2938,7 @@ typedef enum MAV_MODE_PROPERTY
 #include "./mavlink_msg_scaled_pressure3.h"
 #include "./mavlink_msg_follow_target.h"
 #include "./mavlink_msg_control_system_state.h"
-#include "./mavlink_msg_battery_status.h"
 #include "./mavlink_msg_autopilot_version.h"
-#include "./mavlink_msg_landing_target.h"
 #include "./mavlink_msg_fence_status.h"
 #include "./mavlink_msg_mag_cal_report.h"
 #include "./mavlink_msg_efi_status.h"
@@ -2953,8 +2949,6 @@ typedef enum MAV_MODE_PROPERTY
 #include "./mavlink_msg_high_latency.h"
 #include "./mavlink_msg_high_latency2.h"
 #include "./mavlink_msg_vibration.h"
-#include "./mavlink_msg_home_position.h"
-#include "./mavlink_msg_set_home_position.h"
 #include "./mavlink_msg_message_interval.h"
 #include "./mavlink_msg_extended_sys_state.h"
 #include "./mavlink_msg_adsb_vehicle.h"
@@ -2991,7 +2985,6 @@ typedef enum MAV_MODE_PROPERTY
 #include "./mavlink_msg_gimbal_device_information.h"
 #include "./mavlink_msg_gimbal_device_set_attitude.h"
 #include "./mavlink_msg_gimbal_device_attitude_status.h"
-#include "./mavlink_msg_autopilot_state_for_gimbal_device.h"
 #include "./mavlink_msg_gimbal_manager_set_pitchyaw.h"
 #include "./mavlink_msg_gimbal_manager_set_manual_control.h"
 #include "./mavlink_msg_esc_info.h"
@@ -3005,7 +2998,6 @@ typedef enum MAV_MODE_PROPERTY
 #include "./mavlink_msg_param_ext_value.h"
 #include "./mavlink_msg_param_ext_set.h"
 #include "./mavlink_msg_param_ext_ack.h"
-#include "./mavlink_msg_obstacle_distance.h"
 #include "./mavlink_msg_odometry.h"
 #include "./mavlink_msg_trajectory_representation_waypoints.h"
 #include "./mavlink_msg_trajectory_representation_bezier.h"

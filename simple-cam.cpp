@@ -53,7 +53,7 @@ static void requestComplete(Request *request) {
 	loop.callLater(std::bind(&processRequest, request));
 }
 
-static void saveImage(Request *request) {
+static void saveData(Request *request) {
 
 	std::cout << std::endl
 		<< "Queued Request: " << request->toString() << std::endl;
@@ -62,7 +62,7 @@ static void saveImage(Request *request) {
 	//std::this_thread::sleep_for (std::chrono::seconds(1));
 	std::cout << std::endl
 		<< "Processing Request: " << request->toString() << std::endl;
-	std::cout << "saveImage Counter: " << test_increment;
+	std::cout << "saveData Counter: " << test_increment;
 	test_increment++;
 	/*
 	 * Buffer info
@@ -161,7 +161,7 @@ static void processRequest(Request *request) {
 	   }
 	 */
 
-	std::thread saveThread(saveImage, request);
+	std::thread saveThread(saveData, request);
 	saveThread.detach();
 }
 
