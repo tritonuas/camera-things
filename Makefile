@@ -177,30 +177,6 @@ raspy.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/raspy.cpp.s
 .PHONY : raspy.cpp.s
 
-simple-cam.o: simple-cam.cpp.o
-.PHONY : simple-cam.o
-
-# target to build an object file
-simple-cam.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/simple-cam.cpp.o
-.PHONY : simple-cam.cpp.o
-
-simple-cam.i: simple-cam.cpp.i
-.PHONY : simple-cam.i
-
-# target to preprocess a source file
-simple-cam.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/simple-cam.cpp.i
-.PHONY : simple-cam.cpp.i
-
-simple-cam.s: simple-cam.cpp.s
-.PHONY : simple-cam.s
-
-# target to generate assembly for a file
-simple-cam.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/simple-cam.cpp.s
-.PHONY : simple-cam.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -216,9 +192,6 @@ help:
 	@echo "... raspy.o"
 	@echo "... raspy.i"
 	@echo "... raspy.s"
-	@echo "... simple-cam.o"
-	@echo "... simple-cam.i"
-	@echo "... simple-cam.s"
 .PHONY : help
 
 

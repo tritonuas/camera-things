@@ -107,7 +107,13 @@ class Mavlink {
         port = port_; // port management object
     }
 
-    ~Mavlink();
+    //~Mavlink();
+    //
+    //
+
+    void handle_heartbeat(); 
+    void handle_gps();
+    void handle_attitude();
 
     void read_message() {
 
@@ -161,8 +167,41 @@ class Mavlink {
     }
 
 
-    int write_gps_message();
-    int write_attitude_message();
+    int send_gps_message() {
+        mavlink_command_long_t com = { 0 };
+        com.target_system    = system_id;
+        com.target_component = autopilot_id;
+        com.command          = MAV_CMD_MAV_CMD_REQUEST_MESSAGE;
+        com.confirmation     = true;
+        com.param1           = MAVLINK_MSG_ID_GLOBAL_POSITION_INT;
+        com.param7           = 1;
+
+        // Encode
+        mavlink_message_t message;
+        mavlink_msg_command_long_encode(system_id, companion_id, &message, &com);
+
+        // Send the message
+        write_message(message);
+    }
+
+
+    int send_attitude_message() {
+
+        mavlink_command_long_t com = { 0 };
+        com.target_system    = system_id;
+        com.target_component = autopilot_id;
+        com.command          = MAV_CMD_MAV_CMD_REQUEST_MESSAGE;
+        com.confirmation     = true;
+        com.param1           = MAVLINK_MSG_ID_ATTITUDE;
+        com.param7           = 1;
+
+        // Encode
+        mavlink_message_t message;
+        mavlink_msg_command_long_encode(system_id, companion_id, &message, &com);
+
+        // Send the message
+        write_message(message);
+    }
 
     void start() {
 

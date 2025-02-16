@@ -1,13 +1,19 @@
 #include "mavlink.cpp"
-#include "simple-cam.cpp"
+#include "simple-cam.hpp"
 #include "mavlink.hpp"
 #include "obc_port.hpp"
 
-
+#define UART_NAME "/dev/serial0"
+#define BAUDRATE 57600
 int main() {
 
     OBCPort obcPort; 
 
-    obcPort.start();
+    obcPort.start_camera_thread();
+
+    Port *port = new Port(UART_NAME, BAUDRATE); 
+    Mavlink mav(port);
+
+    obcPort.start_listener();
 }
 

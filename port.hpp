@@ -40,7 +40,7 @@ class Port {
         }
 
 
-        Port(char *uart_name_, int baudrate_) {
+        Port(const char *uart_name_, int baudrate_) {
 
             init_defaults();
             uart_name = uart_name_;

@@ -85,12 +85,12 @@ clean: CMakeFiles/raspy.dir/clean
 CMakeFiles/raspy.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/daniel/Documents/tuas/camera-things/CMakeFiles --progress-num=1,2,3,4 "Built target raspy"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/daniel/Documents/tuas/camera-things/CMakeFiles --progress-num=1,2,3 "Built target raspy"
 .PHONY : CMakeFiles/raspy.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/raspy.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/daniel/Documents/tuas/camera-things/CMakeFiles 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/daniel/Documents/tuas/camera-things/CMakeFiles 3
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/raspy.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/daniel/Documents/tuas/camera-things/CMakeFiles 0
 .PHONY : CMakeFiles/raspy.dir/rule
@@ -102,7 +102,7 @@ raspy: CMakeFiles/raspy.dir/rule
 # codegen rule for target.
 CMakeFiles/raspy.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/daniel/Documents/tuas/camera-things/CMakeFiles --progress-num=1,2,3,4 "Finished codegen for target raspy"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/daniel/Documents/tuas/camera-things/CMakeFiles --progress-num=1,2,3 "Finished codegen for target raspy"
 .PHONY : CMakeFiles/raspy.dir/codegen
 
 # clean rule for target.
