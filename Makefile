@@ -117,24 +117,24 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named simple-cam
+# Target rules for targets named raspy
 
 # Build rule for target.
-simple-cam: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 simple-cam
-.PHONY : simple-cam
+raspy: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 raspy
+.PHONY : raspy
 
 # fast build rule for target.
-simple-cam/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simple-cam.dir/build.make CMakeFiles/simple-cam.dir/build
-.PHONY : simple-cam/fast
+raspy/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/build
+.PHONY : raspy/fast
 
 event_loop.o: event_loop.cpp.o
 .PHONY : event_loop.o
 
 # target to build an object file
 event_loop.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simple-cam.dir/build.make CMakeFiles/simple-cam.dir/event_loop.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/event_loop.cpp.o
 .PHONY : event_loop.cpp.o
 
 event_loop.i: event_loop.cpp.i
@@ -142,7 +142,7 @@ event_loop.i: event_loop.cpp.i
 
 # target to preprocess a source file
 event_loop.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simple-cam.dir/build.make CMakeFiles/simple-cam.dir/event_loop.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/event_loop.cpp.i
 .PHONY : event_loop.cpp.i
 
 event_loop.s: event_loop.cpp.s
@@ -150,15 +150,39 @@ event_loop.s: event_loop.cpp.s
 
 # target to generate assembly for a file
 event_loop.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simple-cam.dir/build.make CMakeFiles/simple-cam.dir/event_loop.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/event_loop.cpp.s
 .PHONY : event_loop.cpp.s
+
+raspy.o: raspy.cpp.o
+.PHONY : raspy.o
+
+# target to build an object file
+raspy.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/raspy.cpp.o
+.PHONY : raspy.cpp.o
+
+raspy.i: raspy.cpp.i
+.PHONY : raspy.i
+
+# target to preprocess a source file
+raspy.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/raspy.cpp.i
+.PHONY : raspy.cpp.i
+
+raspy.s: raspy.cpp.s
+.PHONY : raspy.s
+
+# target to generate assembly for a file
+raspy.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/raspy.cpp.s
+.PHONY : raspy.cpp.s
 
 simple-cam.o: simple-cam.cpp.o
 .PHONY : simple-cam.o
 
 # target to build an object file
 simple-cam.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simple-cam.dir/build.make CMakeFiles/simple-cam.dir/simple-cam.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/simple-cam.cpp.o
 .PHONY : simple-cam.cpp.o
 
 simple-cam.i: simple-cam.cpp.i
@@ -166,7 +190,7 @@ simple-cam.i: simple-cam.cpp.i
 
 # target to preprocess a source file
 simple-cam.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simple-cam.dir/build.make CMakeFiles/simple-cam.dir/simple-cam.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/simple-cam.cpp.i
 .PHONY : simple-cam.cpp.i
 
 simple-cam.s: simple-cam.cpp.s
@@ -174,7 +198,7 @@ simple-cam.s: simple-cam.cpp.s
 
 # target to generate assembly for a file
 simple-cam.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simple-cam.dir/build.make CMakeFiles/simple-cam.dir/simple-cam.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raspy.dir/build.make CMakeFiles/raspy.dir/simple-cam.cpp.s
 .PHONY : simple-cam.cpp.s
 
 # Help Target
@@ -185,10 +209,13 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... simple-cam"
+	@echo "... raspy"
 	@echo "... event_loop.o"
 	@echo "... event_loop.i"
 	@echo "... event_loop.s"
+	@echo "... raspy.o"
+	@echo "... raspy.i"
+	@echo "... raspy.s"
 	@echo "... simple-cam.o"
 	@echo "... simple-cam.i"
 	@echo "... simple-cam.s"

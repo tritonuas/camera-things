@@ -23,57 +23,57 @@
 #define BUFFER_COUNT 3
 
 using namespace libcamera;
-class RPICam {
-    //static void requestComplete(Request *request);
+static void requestComplete(Request *request);
 
-    /*
-     * --------------------------------------------------------------------
-     * Handles and processes the request
-     * Heavy processing should not be done in this function and instead
-     * done in a different thread
-     */
+/*
+ * --------------------------------------------------------------------
+ * Handles and processes the request
+ * Heavy processing should not be done in this function and instead
+ * done in a different thread
+ */
 
 
-    /*
-     * Camera Naming.
-     */
-    std::string cameraName(Camera *camera) {
-        const ControlList &props = camera->properties();
-        std::string name;
+/*
+ * Camera Naming.
+ */
+std::string cameraName(Camera *camera) {
+    const ControlList &props = camera->properties();
+    std::string name;
 
-        const auto &location = props.get(properties::Location);
-        if (location) {
-            switch (*location) {
-                case properties::CameraLocationFront:
-                    name = "Internal front camera";
-                    break;
-                case properties::CameraLocationBack:
-                    name = "Internal back camera";
-                    break;
-                case properties::CameraLocationExternal:
-                    name = "External camera";
-                    const auto &model = props.get(properties::Model);
-                    if (model)
-                        name = " '" + *model + "'";
-                    break;
-            }
+    const auto &location = props.get(properties::Location);
+    if (location) {
+        switch (*location) {
+            case properties::CameraLocationFront:
+                name = "Internal front camera";
+                break;
+            case properties::CameraLocationBack:
+                name = "Internal back camera";
+                break;
+            case properties::CameraLocationExternal:
+                name = "External camera";
+                const auto &model = props.get(properties::Model);
+                if (model)
+                    name = " '" + *model + "'";
+                break;
         }
-
-        name += " (" + camera->id() + ")";
-
-        return name;
     }
-    static EventLoop loop;
-    static std::mutex mutex;
+
+    name += " (" + camera->id() + ")";
+
+    return name;
+}
+static EventLoop loop;
+static std::mutex mutex;
     static int send_count;
     static std::mutex send_count_mutex;
-    static int test_increment;
-    static int send_current;
+    static int test_increment = 0;
+    static int send_current = 0;
     //TODO: save to file
     const static int save_to_file = 1;
 
     static std::shared_ptr<Camera> camera;
-    static int j;
+    static int j = 0;
+class RPICam {
     //static int mode = 0;
     //void processRequest(Request *request);
 
@@ -84,6 +84,9 @@ class RPICam {
         send_count_mutex.unlock();
     }
 
+
+
+
     Stream *stream;
     std::vector<std::unique_ptr<Request>> requests;
     FrameBufferAllocator *allocator = new FrameBufferAllocator(camera);
@@ -92,15 +95,11 @@ class RPICam {
      * Creates the camera and configs it
      */
     RPICam() {
-        test_increment = 0;
-        send_current = 0;
-        j = 0;
         /*
          * Create a Camera Manager.
          */
         cm = std::make_unique<CameraManager>();
         cm->start();
-
 
         /*
          * Just as a test, generate names of the Cameras registered in the
@@ -313,7 +312,7 @@ class RPICam {
          */
         loop.timeout(TIMEOUT_SEC);
         //int ret = loop.exec();
-        std::thread cameraThread(&EventLoop::exec, &loop);
+        std::thread cameraThread(&EventLoop::exec);
         std::vector<std::unique_ptr<Request>> requests;
         cameraThread.detach();
         /*
@@ -342,132 +341,132 @@ class RPICam {
         cm->stop();
     }
 
-
-
-    static void saveData(Request *request) {
-        std::cout << std::endl
-            << "Queued Request: " << request->toString() << std::endl;
-
-        mutex.lock();
-        //std::this_thread::sleep_for (std::chrono::seconds(1));
-        std::cout << std::endl
-            << "Processing Request: " << request->toString() << std::endl;
-        std::cout << "saveData Counter: " << test_increment;
-        test_increment++;
-        /*
-         * Buffer info
-         */
-        const Request::BufferMap &buffers = request->buffers();
-        for (auto bufferPair : buffers) {
-
-            // (Unused) Stream *stream = bufferPair.first;
-            FrameBuffer *buffer = bufferPair.second;
-            const FrameMetadata &metadata = buffer->metadata();
-            std::cout << "\n";
-            //std::cout << buffer;
-
-            /* Print some information about the buffer which has completed. */
-            std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
-                << " timestamp: " << metadata.timestamp
-                << " bytesused: ";
-
-            unsigned int nplane = 0;
-            for (const FrameMetadata::Plane &plane : metadata.planes()) {
-                std::cout << plane.bytesused;
-                if (++nplane < metadata.planes().size()) {
-                    std::cout << "/";
-                }
-            }
-
-            std::cout << "Buffer planes: " << buffer->planes().size() << std::endl;
-            for (size_t i = 0; i < buffer->planes().size(); ++i) {
-                const FrameBuffer::Plane &plane = buffer->planes()[i];
-                std::cout << "Plane " << i << ": fd=" << plane.fd.get()
-                    << ", length=" << plane.length
-                    << ", offset=" << plane.offset << std::endl;
-            }	
-
-            for (size_t i = 0; i < buffer->planes().size(); ++i) {
-                const FrameBuffer::Plane &plane = buffer->planes()[i];
-                int fd = plane.fd.get();   // File descriptor for the plane
-                size_t length = plane.length; // Length of the plane data
-                off_t offset = plane.offset;  // Offset within the file descriptor
-
-                // Map the plane memory
-                void *mappedMemory = mmap(nullptr,
-                        length,
-                        PROT_READ | PROT_WRITE,
-                        MAP_SHARED,
-                        fd, offset);
-                if (mappedMemory == MAP_FAILED) {
-                    perror("mmap failed");
-                    mutex.unlock();
-                    return;
-                }
-
-                send_count_mutex.lock();
-                if (send_count >= 1) {
-                    send_current = 1;
-                    send_count--;
-                }
-                send_count_mutex.unlock();
-
-                if (send_current) {
-                    if (save_to_file) {
-                        // Save the mapped memory to a file
-                        std::ofstream file("out/output_plane" + std::to_string(j) + ".raw", std::ios::binary);
-                        //std::cout << length;
-                        file.write(static_cast<char *>(mappedMemory), length);
-                        file.close();
-
-                        //std::cout << "Plane " << j << " saved to output_plane" << j << ".raw" << std::endl;
-                        j++;
-                    }
-                }
-
-                send_current = 0;
-
-                // Unmap the memory
-                munmap(mappedMemory, length);
-            }
-        }
-
-        /* Re-queue the Request to the camera. */
-        std::cout << std::endl
-            << "Finished Processing Request: " << request->toString() << std::endl;
-        request->reuse(Request::ReuseBuffers);
-        camera->queueRequest(request);
-        mutex.unlock();
-
-    }
-
-    static void processRequest(Request *request) {
-        std::cout << std::endl
-            << "Request completed: " << request->toString() << std::endl;
-
-        /*
-         * meta data stuff
-         */
-        /*
-           const ControlList &requestMetadata = request->metadata();
-           for (const auto &ctrl : requestMetadata) {
-           const ControlId *id = controls::controls.at(ctrl.first);
-           const ControlValue &value = ctrl.second;
-
-           std::cout << "\t" << id->name() << " = " << value.toString()
-           << std::endl;
-           }
-           */
-
-        std::thread saveThread(saveData, request);
-        saveThread.detach();
-    }
-
-    static void requestComplete(Request *request) {
-        if (request->status() == Request::RequestCancelled) {
-            return;
-        }
-
-        loop.callLater(std::bind(&processRequest, request));
-    }
 };
+
+
+static void saveData(Request *request) {
+    std::cout << std::endl
+        << "Queued Request: " << request->toString() << std::endl;
+
+    mutex.lock();
+    //std::this_thread::sleep_for (std::chrono::seconds(1));
+    std::cout << std::endl
+        << "Processing Request: " << request->toString() << std::endl;
+    std::cout << "saveData Counter: " << test_increment;
+    test_increment++;
+    /*
+     * Buffer info
+     */
+    const Request::BufferMap &buffers = request->buffers();
+    for (auto bufferPair : buffers) {
+
+        // (Unused) Stream *stream = bufferPair.first;
+        FrameBuffer *buffer = bufferPair.second;
+        const FrameMetadata &metadata = buffer->metadata();
+        std::cout << "\n";
+        //std::cout << buffer;
+
+        /* Print some information about the buffer which has completed. */
+        std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
+            << " timestamp: " << metadata.timestamp
+            << " bytesused: ";
+
+        unsigned int nplane = 0;
+        for (const FrameMetadata::Plane &plane : metadata.planes()) {
+            std::cout << plane.bytesused;
+            if (++nplane < metadata.planes().size()) {
+                std::cout << "/";
+            }
+        }
+
+        std::cout << "Buffer planes: " << buffer->planes().size() << std::endl;
+        for (size_t i = 0; i < buffer->planes().size(); ++i) {
+            const FrameBuffer::Plane &plane = buffer->planes()[i];
+            std::cout << "Plane " << i << ": fd=" << plane.fd.get()
+                << ", length=" << plane.length
+                << ", offset=" << plane.offset << std::endl;
+        }	
+
+        for (size_t i = 0; i < buffer->planes().size(); ++i) {
+            const FrameBuffer::Plane &plane = buffer->planes()[i];
+            int fd = plane.fd.get();   // File descriptor for the plane
+            size_t length = plane.length; // Length of the plane data
+            off_t offset = plane.offset;  // Offset within the file descriptor
+
+            // Map the plane memory
+            void *mappedMemory = mmap(nullptr,
+                    length,
+                    PROT_READ | PROT_WRITE,
+                    MAP_SHARED,
+                    fd, offset);
+            if (mappedMemory == MAP_FAILED) {
+                perror("mmap failed");
+                mutex.unlock();
+                return;
+            }
+
+            send_count_mutex.lock();
+            if (send_count >= 1) {
+                send_current = 1;
+                send_count--;
+            }
+            send_count_mutex.unlock();
+
+            if (send_current) {
+                if (save_to_file) {
+                    // Save the mapped memory to a file
+                    std::ofstream file("out/output_plane" + std::to_string(j) + ".raw", std::ios::binary);
+                    //std::cout << length;
+                    file.write(static_cast<char *>(mappedMemory), length);
+                    file.close();
+
+                    //std::cout << "Plane " << j << " saved to output_plane" << j << ".raw" << std::endl;
+                    j++;
+                }
+            }
+
+            send_current = 0;
+
+            // Unmap the memory
+            munmap(mappedMemory, length);
+        }
+    }
+
+    /* Re-queue the Request to the camera. */
+    std::cout << std::endl
+        << "Finished Processing Request: " << request->toString() << std::endl;
+    request->reuse(Request::ReuseBuffers);
+    camera->queueRequest(request);
+    mutex.unlock();
+
+}
+
+static void processRequest(Request *request) {
+    std::cout << std::endl
+        << "Request completed: " << request->toString() << std::endl;
+
+    /*
+     * meta data stuff
+     */
+    /*
+       const ControlList &requestMetadata = request->metadata();
+       for (const auto &ctrl : requestMetadata) {
+       const ControlId *id = controls::controls.at(ctrl.first);
+       const ControlValue &value = ctrl.second;
+
+       std::cout << "\t" << id->name() << " = " << value.toString()
+       << std::endl;
+       }
+       */
+
+    std::thread saveThread(saveData, request);
+    saveThread.detach();
+}
+
+static void requestComplete(Request *request) {
+    if (request->status() == Request::RequestCancelled) {
+        return;
+    }
+
+    loop.callLater(std::bind(&processRequest, request));
+}

@@ -43,8 +43,7 @@ int EventLoop::exec()
 	return exitCode_;
 }
 
-void EventLoop::exit(int code)
-{
+void EventLoop::exit(int code) {
 	exitCode_ = code;
 	exit_.store(true, std::memory_order_release);
 	interrupt();
@@ -55,15 +54,12 @@ void EventLoop::interrupt()
 	event_base_loopbreak(event_);
 }
 
-
-void EventLoop::timeoutTriggered(int fd, short event, void *arg)
-{
+void EventLoop::timeoutTriggered(int fd, short event, void *arg) {
 	EventLoop *self = static_cast<EventLoop *>(arg);
 	self->exit();
 }
 
-void EventLoop::timeout(unsigned int sec)
-{
+void EventLoop::timeout(unsigned int sec) {
 	struct event *ev;
 	struct timeval tv;
 

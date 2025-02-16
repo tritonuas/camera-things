@@ -218,11 +218,11 @@ class Mavlink {
     }
 
     private:
-        static void* read_thread_entry(void* arg) {
-            Mavlink* self = static_cast<Mavlink*>(arg);
-            self->read_thread();  // Call the actual member function
-            return nullptr;
-        }
+    static void* read_thread_entry(void* arg) {
+        Mavlink* self = static_cast<Mavlink*>(arg);
+        self->read_thread();  // Call the actual member function
+        return nullptr;
+    }
 
 
     void read_thread() {

@@ -6,15 +6,18 @@ CMakeFiles/simple-cam.dir/event_loop.cpp.o: event_loop.cpp \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
+  /usr/include/asm-generic/int-ll64.h \
   /usr/include/asm-generic/posix_types.h \
   /usr/include/asm-generic/socket.h \
   /usr/include/asm-generic/sockios.h \
+  /usr/include/asm-generic/types.h \
   /usr/include/asm/bitsperlong.h \
   /usr/include/asm/errno.h \
   /usr/include/asm/posix_types.h \
   /usr/include/asm/posix_types_64.h \
   /usr/include/asm/socket.h \
   /usr/include/asm/sockios.h \
+  /usr/include/asm/types.h \
   /usr/include/assert.h \
   /usr/include/bits/atomic_wide_counter.h \
   /usr/include/bits/byteswap.h \
@@ -180,7 +183,9 @@ CMakeFiles/simple-cam.dir/event_loop.cpp.o: event_loop.cpp \
   /usr/include/gnu/stubs.h \
   /usr/include/linux/errno.h \
   /usr/include/linux/posix_types.h \
+  /usr/include/linux/sched/types.h \
   /usr/include/linux/stddef.h \
+  /usr/include/linux/types.h \
   /usr/include/netdb.h \
   /usr/include/netinet/in.h \
   /usr/include/pthread.h \
@@ -854,21 +859,38 @@ CMakeFiles/simple-cam.dir/simple-cam.cpp.o: simple-cam.cpp \
   /usr/lib/gcc/x86_64-pc-linux-gnu/14.2.1/include/stddef.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/14.2.1/include/stdint.h
 
-simple-cam: /usr/lib/libc.so \
+simple-cam: /usr/lib/Scrt1.o \
+  /usr/lib/crti.o \
+  /usr/lib/crtn.o \
+  /usr/lib/libc.so \
   /usr/lib/libgcc_s.so \
+  /usr/lib/libgcc_s.so.1 \
   /usr/lib/libm.so \
+  /usr/lib/libstdc++.so \
+  /usr/lib/gcc/x86_64-pc-linux-gnu/14.2.1/crtbeginS.o \
+  /usr/lib/gcc/x86_64-pc-linux-gnu/14.2.1/crtendS.o \
+  /usr/lib/gcc/x86_64-pc-linux-gnu/14.2.1/libgcc.a \
   /usr/lib/ld-linux-x86-64.so.2 \
   /usr/lib/libbz2.so.1.0 \
+  /usr/lib/libc.so.6 \
+  /usr/lib/libc_nonshared.a \
+  /usr/lib/libcamera-base.so \
+  /usr/lib/libcamera.so \
   /usr/lib/libcap.so.2 \
   /usr/lib/libdw.so.1 \
   /usr/lib/libelf.so.1 \
+  /usr/lib/libevent.so \
   /usr/lib/libevent_core-2.1.so.7 \
+  /usr/lib/libevent_pthreads.so \
   /usr/lib/libffi.so.8 \
   /usr/lib/libgmp.so.10 \
   /usr/lib/libgnutls.so.30 \
   /usr/lib/libhogweed.so.6 \
   /usr/lib/libidn2.so.0 \
+  /usr/lib/libleancrypto.so.1 \
   /usr/lib/liblzma.so.5 \
+  /usr/lib/libm.so.6 \
+  /usr/lib/libmvec.so.1 \
   /usr/lib/libnettle.so.8 \
   /usr/lib/libp11-kit.so.0 \
   /usr/lib/libtasn1.so.6 \
@@ -891,8 +913,12 @@ simple-cam: /usr/lib/libc.so \
   /usr/lib32/libunistring.so.5 \
   /usr/lib32/libunwind.so.8 \
   /usr/lib32/libz.so.1 \
-  /usr/lib32/libzstd.so.1
+  /usr/lib32/libzstd.so.1 \
+  CMakeFiles/simple-cam.dir/event_loop.cpp.o \
+  CMakeFiles/simple-cam.dir/simple-cam.cpp.o
 
+
+CMakeFiles/simple-cam.dir/simple-cam.cpp.o:
 
 /usr/lib32/libzstd.so.1:
 
@@ -930,11 +956,15 @@ simple-cam: /usr/lib/libc.so \
 
 /usr/lib/libgnutls.so.30:
 
+/usr/lib/libevent_pthreads.so:
+
 /usr/lib/libevent_core-2.1.so.7:
 
 /usr/lib/libelf.so.1:
 
 /usr/lib/libdw.so.1:
+
+/usr/lib/libc_nonshared.a:
 
 /usr/lib/libbz2.so.1.0:
 
@@ -942,7 +972,13 @@ simple-cam: /usr/lib/libc.so \
 
 /usr/lib/ld-linux-x86-64.so.2:
 
+/usr/lib/libgcc_s.so.1:
+
 /usr/lib/libgcc_s.so:
+
+/usr/lib/crtn.o:
+
+/usr/lib/Scrt1.o:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/14.2.1/include/stdbool.h:
 
@@ -965,10 +1001,6 @@ simple-cam: /usr/lib/libc.so \
 /usr/include/math.h:
 
 /usr/include/locale.h:
-
-/usr/include/linux/types.h:
-
-/usr/include/linux/sched/types.h:
 
 /usr/include/libintl.h:
 
@@ -1013,6 +1045,8 @@ simple-cam: /usr/lib/libc.so \
 /usr/include/c++/14.2.1/x86_64-pc-linux-gnu/bits/ctype_inline.h:
 
 /usr/include/c++/14.2.1/x86_64-pc-linux-gnu/bits/c++locale.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/14.2.1/libgcc.a:
 
 /usr/include/c++/14.2.1/utility:
 
@@ -1096,21 +1130,13 @@ simple-cam: /usr/lib/libc.so \
 
 /usr/include/c++/14.2.1/bits/stl_multiset.h:
 
-/usr/include/bits/types/siginfo_t.h:
-
-common/mavlink_msg_data_transmission_handshake.h:
-
-/usr/include/libcamera/libcamera/property_ids.h:
-
-common/mavlink_msg_data_stream.h:
+/usr/include/c++/14.2.1/bits/stl_multimap.h:
 
 common/mavlink_msg_component_information_basic.h:
 
 common/mavlink_msg_command_long.h:
 
 common/mavlink_msg_command_int.h:
-
-common/mavlink_msg_debug_float_array.h:
 
 common/mavlink_msg_command_cancel.h:
 
@@ -1121,14 +1147,6 @@ common/mavlink_msg_log_request_list.h:
 common/mavlink_msg_change_operator_control_ack.h:
 
 /usr/include/bits/signum-generic.h:
-
-common/mavlink_msg_change_operator_control.h:
-
-protocol.h:
-
-/usr/include/bits/select.h:
-
-/usr/include/c++/14.2.1/bits/algorithmfwd.h:
 
 common/mavlink_msg_cellular_config.h:
 
@@ -1144,9 +1162,13 @@ common/mavlink_msg_camera_settings.h:
 
 /usr/include/bits/sigthread.h:
 
+/usr/lib/gcc/x86_64-pc-linux-gnu/14.2.1/crtbeginS.o:
+
 /usr/include/libcamera/libcamera/orientation.h:
 
 /usr/include/bits/termios-c_iflag.h:
+
+/usr/lib/libevent.so:
 
 common/mavlink_msg_camera_image_captured.h:
 
@@ -1154,13 +1176,13 @@ common/mavlink_msg_camera_capture_status.h:
 
 common/mavlink_msg_attitude_quaternion.h:
 
-/usr/include/asm-generic/bitsperlong.h:
-
-/usr/include/c++/14.2.1/bits/chrono.h:
-
 /usr/lib/libc.so:
 
 /usr/include/asm-generic/types.h:
+
+/usr/include/asm-generic/bitsperlong.h:
+
+/usr/include/c++/14.2.1/bits/chrono.h:
 
 common/mavlink_msg_adsb_vehicle.h:
 
@@ -1171,6 +1193,8 @@ common/mavlink_msg_adsb_vehicle.h:
 common/mavlink_msg_gps_rtk.h:
 
 common/mavlink_msg_att_pos_mocap.h:
+
+/usr/lib/libstdc++.so:
 
 simple-cam.cpp:
 
@@ -1185,6 +1209,8 @@ common/mavlink_msg_rc_channels_raw.h:
 /usr/lib/libzstd.so.1:
 
 /usr/include/sys/cdefs.h:
+
+/usr/lib/libc.so.6:
 
 /usr/include/bits/fp-fast.h:
 
@@ -1201,6 +1227,18 @@ mavlink_types.h:
 /usr/include/sched.h:
 
 /usr/include/netdb.h:
+
+common/mavlink_msg_change_operator_control.h:
+
+/usr/include/bits/select.h:
+
+protocol.h:
+
+/usr/include/c++/14.2.1/bits/algorithmfwd.h:
+
+/usr/include/linux/types.h:
+
+/usr/include/linux/sched/types.h:
 
 /usr/include/linux/posix_types.h:
 
@@ -1233,6 +1271,10 @@ common/mavlink_msg_gps_rtcm_data.h:
 /usr/include/event2/event-config.h:
 
 common/mavlink_msg_param_ext_set.h:
+
+common/mavlink_msg_gps2_raw.h:
+
+common/mavlink_msg_esc_status.h:
 
 /usr/include/bits/getopt_posix.h:
 
@@ -1276,6 +1318,8 @@ common/mavlink_msg_named_value_int.h:
 
 /usr/include/c++/14.2.1/typeinfo:
 
+/usr/lib/libleancrypto.so.1:
+
 /usr/include/c++/14.2.1/tr1/hypergeometric.tcc:
 
 /usr/include/c++/14.2.1/ext/alloc_traits.h:
@@ -1294,6 +1338,8 @@ common/mavlink_msg_encapsulated_data.h:
 
 /usr/include/c++/14.2.1/compare:
 
+/usr/lib/libcamera.so:
+
 minimal/mavlink_msg_protocol_version.h:
 
 /usr/include/c++/14.2.1/cerrno:
@@ -1310,21 +1356,21 @@ common/mavlink_msg_optical_flow_rad.h:
 
 /usr/include/bits/unistd_ext.h:
 
-/usr/include/bits/types/clockid_t.h:
+/usr/include/bits/sigstack.h:
 
-common/mavlink_msg_utm_global_position.h:
+/usr/include/bits/timex.h:
 
-/usr/include/signal.h:
+/usr/include/c++/14.2.1/bits/stl_vector.h:
 
-/usr/include/bits/atomic_wide_counter.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/14.2.1/crtendS.o:
 
-/usr/include/c++/14.2.1/bits/hashtable_policy.h:
-
-common/mavlink_msg_open_drone_id_message_pack.h:
-
-/usr/include/c++/14.2.1/bits/specfun.h:
+common/mavlink_msg_serial_control.h:
 
 /usr/include/bits/types/__FILE.h:
+
+common/mavlink_msg_component_metadata.h:
+
+/usr/include/features.h:
 
 /usr/include/bits/termios-baud.h:
 
@@ -1358,10 +1404,6 @@ mavlink.hpp:
 
 common/mavlink_msg_available_modes.h:
 
-common/mavlink_msg_raw_imu.h:
-
-common/mavlink_msg_global_position_int_cov.h:
-
 /usr/include/bits/stdint-uintn.h:
 
 /usr/include/asm/errno.h:
@@ -1386,6 +1428,10 @@ common/mavlink_msg_current_event_sequence.h:
 
 /usr/include/c++/14.2.1/bits/locale_facets.h:
 
+/usr/include/bits/types/clockid_t.h:
+
+common/mavlink_msg_utm_global_position.h:
+
 /usr/include/c++/14.2.1/new:
 
 /usr/include/bits/types/error_t.h:
@@ -1401,12 +1447,6 @@ common/mavlink_msg_hygrometer_sensor.h:
 /usr/include/bits/types/struct_osockaddr.h:
 
 /usr/include/c++/14.2.1/bits/enable_special_members.h:
-
-/usr/include/bits/timex.h:
-
-/usr/include/c++/14.2.1/bits/stl_vector.h:
-
-common/mavlink_msg_serial_control.h:
 
 /usr/include/bits/setjmp.h:
 
@@ -1448,25 +1488,39 @@ common/mavlink_msg_logging_data_acked.h:
 
 /usr/include/bits/termios-c_oflag.h:
 
-/usr/include/features.h:
-
-common/mavlink_msg_component_metadata.h:
-
-common/mavlink_msg_esc_status.h:
-
-common/mavlink_msg_gps2_raw.h:
-
 common/mavlink_msg_high_latency2.h:
 
 /usr/include/c++/14.2.1/bits/alloc_traits.h:
 
 /usr/include/c++/14.2.1/bits/sstream.tcc:
 
+/usr/include/gnu/stubs.h:
+
+common/mavlink_msg_global_vision_position_estimate.h:
+
 common/mavlink_msg_setup_signing.h:
 
 /usr/include/c++/14.2.1/bits/new_allocator.h:
 
-/usr/include/asm/posix_types_64.h:
+/usr/include/bits/floatn.h:
+
+/usr/include/c++/14.2.1/bits/stl_pair.h:
+
+common/mavlink_msg_fence_status.h:
+
+/usr/include/bits/pthread_stack_min-dynamic.h:
+
+/usr/include/bits/mathcalls-narrow.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/14.2.1/include/stdint.h:
+
+/usr/include/bits/flt-eval-method.h:
+
+/usr/include/c++/14.2.1/bits/atomic_futex.h:
+
+common/mavlink_msg_collision.h:
+
+/usr/include/c++/14.2.1/bits/atomic_base.h:
 
 /usr/include/c++/14.2.1/condition_variable:
 
@@ -1486,35 +1540,11 @@ common/mavlink_msg_autopilot_version.h:
 
 /usr/include/c++/14.2.1/bits/stl_uninitialized.h:
 
-/usr/include/bits/types/__fpos_t.h:
+/usr/include/asm/posix_types_64.h:
 
-/usr/include/c++/14.2.1/bits/uses_allocator.h:
+/usr/include/asm-generic/int-ll64.h:
 
-/usr/include/c++/14.2.1/mutex:
-
-/usr/include/rpc/netdb.h:
-
-common/mavlink_msg_command_ack.h:
-
-/usr/include/bits/types/sig_atomic_t.h:
-
-common/mavlink_msg_position_target_global_int.h:
-
-/usr/include/bits/mathcalls-narrow.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/14.2.1/include/stdint.h:
-
-/usr/include/bits/flt-eval-method.h:
-
-/usr/include/c++/14.2.1/bits/atomic_futex.h:
-
-common/mavlink_msg_collision.h:
-
-/usr/include/c++/14.2.1/bits/atomic_base.h:
-
-common/mavlink_msg_fence_status.h:
-
-/usr/include/bits/pthread_stack_min-dynamic.h:
+common/mavlink_msg_local_position_ned.h:
 
 /usr/include/asm-generic/socket.h:
 
@@ -1544,25 +1574,51 @@ common/mavlink_msg_trajectory_representation_waypoints.h:
 
 /usr/include/bits/long-double.h:
 
+/usr/lib/libcamera-base.so:
+
+/usr/include/c++/14.2.1/ios:
+
+/usr/include/asm/types.h:
+
+/usr/include/c++/14.2.1/limits:
+
+common/mavlink_msg_camera_thermal_range.h:
+
+/usr/include/bits/types/struct_FILE.h:
+
+common/mavlink_msg_mag_cal_report.h:
+
+/usr/include/bits/environments.h:
+
+event_loop.cpp:
+
+/usr/include/c++/14.2.1/bits/list.tcc:
+
 /usr/include/c++/14.2.1/ext/atomicity.h:
 
 common/mavlink_msg_control_system_state.h:
 
 /usr/include/bits/time64.h:
 
-event_loop.cpp:
+/usr/include/signal.h:
 
-/usr/include/c++/14.2.1/bits/list.tcc:
+/usr/include/bits/atomic_wide_counter.h:
+
+/usr/include/c++/14.2.1/bits/hashtable_policy.h:
+
+common/mavlink_msg_open_drone_id_message_pack.h:
+
+common/mavlink_msg_global_position_int_cov.h:
+
+common/mavlink_msg_raw_imu.h:
+
+/usr/include/c++/14.2.1/bits/specfun.h:
 
 /usr/include/c++/14.2.1/x86_64-pc-linux-gnu/bits/c++config.h:
 
 common/mavlink_msg_can_frame.h:
 
 /usr/include/bits/errno.h:
-
-/usr/include/bits/types/clock_t.h:
-
-common/mavlink_msg_ping.h:
 
 /usr/include/c++/14.2.1/bits/parse_numbers.h:
 
@@ -1580,13 +1636,23 @@ standard/standard.h:
 
 common/mavlink_msg_param_ext_request_read.h:
 
-/usr/include/bits/floatn.h:
+/usr/include/bits/types/__fpos_t.h:
 
-/usr/include/c++/14.2.1/bits/stl_pair.h:
+/usr/include/c++/14.2.1/bits/uses_allocator.h:
 
-/usr/include/gnu/stubs.h:
+/usr/include/c++/14.2.1/mutex:
 
-common/mavlink_msg_global_vision_position_estimate.h:
+/usr/include/rpc/netdb.h:
+
+common/mavlink_msg_command_ack.h:
+
+/usr/include/bits/types/sig_atomic_t.h:
+
+common/mavlink_msg_ping.h:
+
+/usr/include/bits/types/clock_t.h:
+
+common/mavlink_msg_position_target_global_int.h:
 
 /usr/include/bits/types/locale_t.h:
 
@@ -1597,16 +1663,6 @@ common/mavlink_msg_uavcan_node_info.h:
 /usr/include/asm-generic/sockios.h:
 
 /usr/include/bits/types/sigset_t.h:
-
-/usr/include/c++/14.2.1/limits:
-
-common/mavlink_msg_camera_thermal_range.h:
-
-/usr/include/bits/types/struct_FILE.h:
-
-common/mavlink_msg_mag_cal_report.h:
-
-/usr/include/bits/environments.h:
 
 /usr/include/c++/14.2.1/bits/invoke.h:
 
@@ -1695,6 +1751,12 @@ common/mavlink_msg_battery_info.h:
 mavlink_helpers.h:
 
 common/mavlink_msg_hil_optical_flow.h:
+
+CMakeFiles/simple-cam.dir/event_loop.cpp.o:
+
+common/mavlink_msg_vfr_hud.h:
+
+/usr/include/asm-generic/posix_types.h:
 
 /usr/include/c++/14.2.1/cctype:
 
@@ -1790,7 +1852,15 @@ common/mavlink_msg_mission_request_list.h:
 
 common/mavlink_msg_gps_status.h:
 
-/usr/include/bits/sigstack.h:
+/usr/include/libcamera/libcamera/property_ids.h:
+
+common/mavlink_msg_data_stream.h:
+
+common/mavlink_msg_data_transmission_handshake.h:
+
+/usr/include/bits/types/siginfo_t.h:
+
+common/mavlink_msg_debug_float_array.h:
 
 common/mavlink_msg_debug_vect.h:
 
@@ -1837,6 +1907,8 @@ common/mavlink_msg_gimbal_manager_information.h:
 /usr/include/c++/14.2.1/concepts:
 
 common/mavlink_msg_gimbal_manager_status.h:
+
+/usr/lib/libm.so.6:
 
 /usr/include/sys/ttydefaults.h:
 
@@ -1912,10 +1984,6 @@ common/mavlink_msg_link_node_status.h:
 
 common/mavlink_msg_tunnel.h:
 
-common/mavlink_msg_local_position_ned.h:
-
-/usr/include/asm-generic/int-ll64.h:
-
 common/mavlink_msg_local_position_ned_cov.h:
 
 common/mavlink_msg_local_position_ned_system_global_offset.h:
@@ -1976,6 +2044,10 @@ common/mavlink_msg_onboard_computer_status.h:
 
 common/mavlink_msg_open_drone_id_arm_status.h:
 
+/usr/include/c++/14.2.1/bits/stl_map.h:
+
+common/mavlink_msg_open_drone_id_authentication.h:
+
 common/mavlink_msg_open_drone_id_basic_id.h:
 
 common/mavlink_msg_open_drone_id_operator_id.h:
@@ -1999,10 +2071,6 @@ common/mavlink_msg_scaled_pressure.h:
 /usr/include/c++/14.2.1/bits/uses_allocator_args.h:
 
 common/mavlink_msg_param_ext_ack.h:
-
-common/mavlink_msg_open_drone_id_authentication.h:
-
-/usr/include/c++/14.2.1/bits/stl_map.h:
 
 common/mavlink_msg_param_ext_request_list.h:
 
@@ -2094,17 +2162,11 @@ common/mavlink_msg_terrain_report.h:
 
 /usr/include/bits/termios.h:
 
-/usr/include/c++/14.2.1/bits/stl_multimap.h:
-
 common/mavlink_msg_trajectory_representation_bezier.h:
 
 /usr/include/c++/14.2.1/backward/binders.h:
 
 common/mavlink_msg_uavcan_node_status.h:
-
-/usr/include/asm-generic/posix_types.h:
-
-common/mavlink_msg_vfr_hud.h:
 
 /usr/include/c++/14.2.1/debug/debug.h:
 
@@ -2142,11 +2204,9 @@ common/common.h:
 
 port.hpp:
 
-/usr/include/c++/14.2.1/ios:
-
-/usr/include/asm/types.h:
-
 /usr/include/bits/fcntl-linux.h:
+
+/usr/lib/libmvec.so.1:
 
 /usr/include/linux/stddef.h:
 
@@ -2193,6 +2253,8 @@ common/mavlink_msg_vision_position_estimate.h:
 /usr/include/c++/14.2.1/bits/localefwd.h:
 
 /usr/include/bits/siginfo-arch.h:
+
+/usr/lib/crti.o:
 
 /usr/include/c++/14.2.1/optional:
 
