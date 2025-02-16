@@ -1,6 +1,9 @@
 #ifndef INCLUDE_MAVLINK_HPP_
 #define INCLUDE_MAVLINK_HPP_
 
+#define RAW_ATTITUDE_SIZE 29
+#define RAW_GPS_SIZE 37
+
 #include <chrono>
 #include <cstdint>
 #include <iostream>
@@ -54,9 +57,6 @@ struct Mavlink_Messages {
     mavlink_attitude_t attitude;
 
     // System Parameters?
-
-
-
 };
 
 
@@ -113,7 +113,10 @@ class Mavlink {
 
     void handle_heartbeat(); 
     void handle_gps();
-    void handle_attitude();
+    void handle_attitude(mavlink_message_t message) {
+        mavlink_msg_attitude_decode(message, current_messages.attitude);
+    }
+
 
     void read_message() {
 
@@ -168,10 +171,10 @@ class Mavlink {
 
 
     int send_gps_message() {
-        mavlink_command_long_t com = { 0 };
+        mavlink_command_long_t com = {};
         com.target_system    = system_id;
         com.target_component = autopilot_id;
-        com.command          = MAV_CMD_MAV_CMD_REQUEST_MESSAGE;
+        com.command          = MAV_CMD_REQUEST_MESSAGE;
         com.confirmation     = true;
         com.param1           = MAVLINK_MSG_ID_GLOBAL_POSITION_INT;
         com.param7           = 1;
@@ -181,16 +184,16 @@ class Mavlink {
         mavlink_msg_command_long_encode(system_id, companion_id, &message, &com);
 
         // Send the message
-        write_message(message);
+        return write_message(message);
     }
 
 
     int send_attitude_message() {
 
-        mavlink_command_long_t com = { 0 };
+        mavlink_command_long_t com = {};
         com.target_system    = system_id;
         com.target_component = autopilot_id;
-        com.command          = MAV_CMD_MAV_CMD_REQUEST_MESSAGE;
+        com.command          = MAV_CMD_REQUEST_MESSAGE;
         com.confirmation     = true;
         com.param1           = MAVLINK_MSG_ID_ATTITUDE;
         com.param7           = 1;
@@ -200,7 +203,7 @@ class Mavlink {
         mavlink_msg_command_long_encode(system_id, companion_id, &message, &com);
 
         // Send the message
-        write_message(message);
+        return write_message(message);
     }
 
     void start() {
