@@ -1,1 +1,0 @@
-/usr/bin/c++ -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Werror -Wno-unused-parameter -Wl,--dependency-file=CMakeFiles/simple-cam.dir/link.d "CMakeFiles/simple-cam.dir/simple-cam.cpp.o" "CMakeFiles/simple-cam.dir/event_loop.cpp.o" -o simple-cam  /usr/lib/libevent_pthreads.so /usr/lib/libevent.so /usr/lib/libcamera.so /usr/lib/libcamera-base.so

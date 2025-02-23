@@ -111,12 +111,14 @@ class Mavlink {
     //
     //
 
+    /*
     void handle_heartbeat(); 
     void handle_gps();
     void handle_attitude(mavlink_message_t message) {
         mavlink_msg_attitude_decode(message, current_messages.attitude);
     }
 
+	*/
 
     void read_message() {
 

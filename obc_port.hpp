@@ -10,16 +10,34 @@
 #include <functional>
 #include <iostream>
 
-#define VENDOR_ID 0x1234       // Replace with your device's VID
-#define PRODUCT_ID 0x5678      // Replace with your device's PID
-#define TIMEOUT_MS 5000
-#define IMAGE_PATH "image.jpg"
 
-struct EndpointInfo {
-    uint8_t address;
-    uint16_t max_packet_size;
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#include <iostream>
+#include <cstring>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+
+
+
+const int CHUNK_SIZE = 1024;
+const char* SERVER_IP = "192.168.68.2";
+const int SERVER_PORT = 8888;
+const size_t SHM_SIZE = 1024 * 1024;  // 1MB shared memory
+
+#pragma pack(push, 1)
+struct Header {
+    uint32_t magic = 0x12345678;
+    uint32_t total_chunks;
+    uint32_t mem_size;
 };
-
+#pragma pack(pop)
 
 
 class OBCPort {
@@ -28,119 +46,17 @@ class OBCPort {
 
         int camera_thread_started;
 
-        bool find_endpoints(libusb_device_handle* handle, EndpointInfo& interrupt_in, EndpointInfo& bulk_out) {
-            libusb_device* device = libusb_get_device(handle);
-            libusb_config_descriptor* config = nullptr;
-
-            if (libusb_get_active_config_descriptor(device, &config) != LIBUSB_SUCCESS) {
-                return false;
-            }
-
-            for (int i = 0; i < config->bNumInterfaces; i++) {
-                const libusb_interface& interface = config->interface[i];
-                for (int j = 0; j < interface.num_altsetting; j++) {
-                    const libusb_interface_descriptor& alt = interface.altsetting[j];
-                    for (int k = 0; k < alt.bNumEndpoints; k++) {
-                        const libusb_endpoint_descriptor& ep = alt.endpoint[k];
-
-                        if ((ep.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) == LIBUSB_TRANSFER_TYPE_INTERRUPT &&
-                                (ep.bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN) {
-                            interrupt_in.address = ep.bEndpointAddress;
-                            interrupt_in.max_packet_size = ep.wMaxPacketSize;
-                        }
-                        else if ((ep.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) == LIBUSB_TRANSFER_TYPE_BULK &&
-                                (ep.bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_OUT) {
-                            bulk_out.address = ep.bEndpointAddress;
-                            bulk_out.max_packet_size = ep.wMaxPacketSize;
-                        }
-                    }
-                }
-            }
-
-            libusb_free_config_descriptor(config);
-            return (interrupt_in.address != 0 && bulk_out.address != 0);
-        }
 
 
-        /**
-          bool send_mapped_memory(libusb_device_handle* handle, 
-          const EndpointInfo& bulk_out,
-          const unsigned char* mapped_data,
-          size_t data_size) {
-          size_t total_sent = 0;
 
-          while (total_sent < data_size) {
-          int chunk_size = std::min(static_cast<size_t>(bulk_out.max_packet_size),
-          data_size - total_sent);
-          int actual_sent;
-
-          int result = libusb_bulk_transfer(handle,
-          bulk_out.address,
-          const_cast<unsigned char*>(&mapped_data[total_sent]),
-          chunk_size,
-          &actual_sent,
-          TIMEOUT_MS);
-
-          if (result != LIBUSB_SUCCESS) {
-          std::cerr << "Bulk transfer error: " << libusb_error_name(result) << std::endl;
-          return false;
-          }
-          total_sent += actual_sent;
-          }
-
-          std::cout << "Memory sent successfully (" << total_sent << " bytes)" << std::endl;
-          return true;
-          }
-          */
-
-
-        bool send_image(libusb_device_handle* handle, const EndpointInfo& bulk_out) {
-            std::ifstream file(IMAGE_PATH, std::ios::binary | std::ios::ate);
-            if (!file) {
-                std::cerr << "Failed to open image file" << std::endl;
-                return false;
-            }
-
-            std::streamsize size = file.tellg();
-            file.seekg(0, std::ios::beg);
-
-            std::vector<unsigned char> buffer(size);
-            if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
-                std::cerr << "Failed to read image file" << std::endl;
-                return false;
-            }
-
-            size_t total_sent = 0;
-            while (total_sent < buffer.size()) {
-                int chunk_size = std::min(static_cast<size_t>(bulk_out.max_packet_size), 
-                        buffer.size() - total_sent);
-                int actual_sent;
-
-                int result = libusb_bulk_transfer(handle,
-                        bulk_out.address,
-                        &buffer[total_sent],
-                        chunk_size,
-                        &actual_sent,
-                        TIMEOUT_MS);
-
-                if (result != LIBUSB_SUCCESS) {
-                    std::cerr << "Bulk transfer error: " << libusb_error_name(result) << std::endl;
-                    return false;
-                }
-                total_sent += actual_sent;
-            }
-
-            std::cout << "Image sent successfully (" << total_sent << " bytes)" << std::endl;
-            return true;
-        }
-
+        bool send_image();
 
         void start_camera_thread() {
             std::thread cameraThread(RPICam::start);
             camera_thread_started = 1;
             cameraThread.detach();
         }
-            
+
 
         void start_listener() {
 
@@ -149,76 +65,79 @@ class OBCPort {
                 return;
             }
 
-            libusb_device_handle* handle;
-            EndpointInfo interrupt_in;
-            EndpointInfo bulk_out;
-            int started = 0;
-            if (started) {
-                return;
+            int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+            if (sockfd < 0) {
+                std::cerr << "Socket creation failed" << std::endl;
+                shm_unlink("/demo_shm");
+                return 1;
             }
 
+            // Bind socket
+            sockaddr_in server_addr{};
+            server_addr.sin_family = AF_INET;
+            server_addr.sin_port = htons(SERVER_PORT);
+            inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
 
-            started = 1;
-            libusb_init(nullptr);
-            libusb_set_option(nullptr, LIBUSB_OPTION_LOG_LEVEL, LIBUSB_LOG_LEVEL_WARNING);
-
-            handle = libusb_open_device_with_vid_pid(nullptr, VENDOR_ID, PRODUCT_ID);
-            if (!handle) {
-                std::cerr << "Device not found" << std::endl;
-                return;
+            if (bind(sockfd, (const sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+                std::cerr << "Bind failed" << std::endl;
+                close(sockfd);
+                munmap(shm_ptr, SHM_SIZE);
+                close(shm_fd);
+                shm_unlink("/demo_shm");
+                return 1;
             }
 
-            if (libusb_kernel_driver_active(handle, 0) == 1) {
-                libusb_detach_kernel_driver(handle, 0);
+            std::cout << "Server ready, shared memory mapped..." << std::endl;
+
+            // Wait for request
+            sockaddr_in client_addr{};
+            socklen_t client_len = sizeof(client_addr);
+            char request[10];
+
+            recvfrom(sockfd, request, sizeof(request), 0,
+                    (sockaddr*)&client_addr, &client_len);
+
+            // Prepare and send header
+            Header header;
+            header.total_chunks = (SHM_SIZE + CHUNK_SIZE - 1) / CHUNK_SIZE;
+            header.mem_size = SHM_SIZE;
+
+            Header net_header = header;
+            net_header.magic = htonl(net_header.magic);
+            net_header.total_chunks = htonl(net_header.total_chunks);
+            net_header.mem_size = htonl(net_header.mem_size);
+
+            sendto(sockfd, &net_header, sizeof(net_header), 0,
+                    (const sockaddr*)&client_addr, client_len);
+
+            // Send memory chunks
+            for (uint32_t i = 0; i < header.total_chunks; ++i) {
+                const size_t offset = i * CHUNK_SIZE;
+                const size_t remaining = SHM_SIZE - offset;
+                const size_t send_size = (remaining > CHUNK_SIZE) ? CHUNK_SIZE : remaining;
+
+                std::vector<char> chunk(sizeof(uint32_t) + send_size);
+                *(uint32_t*)chunk.data() = htonl(i);
+                memcpy(chunk.data() + sizeof(uint32_t), shm_ptr + offset, send_size);
+
+                sendto(sockfd, chunk.data(), chunk.size(), 0,
+                        (const sockaddr*)&client_addr, client_len);
             }
 
-            if (libusb_claim_interface(handle, 0) != LIBUSB_SUCCESS) {
-                std::cerr << "Could not claim interface" << std::endl;
-                libusb_close(handle);
-                return;
-            }
+            std::cout << "Memory region sent" << std::endl;
 
-            interrupt_in.address = 0;
-            interrupt_in.max_packet_size = 0;
-            bulk_out.address = 0;
-            bulk_out.max_packet_size = 0;
-            if (!find_endpoints(handle, interrupt_in, bulk_out)) {
-                std::cerr << "Could not find required endpoints" << std::endl;
-                libusb_release_interface(handle, 0);
-                libusb_close(handle);
-                return;
-            }
+            // Cleanup
+            munmap(shm_ptr, SHM_SIZE);
+            close(shm_fd);
+            shm_unlink("/demo_shm");
+            close(sockfd);
+            return 0;
 
-            std::cout << "Server started. Waiting for requests..." << std::endl;
 
-            std::vector<unsigned char> buffer(interrupt_in.max_packet_size);
-            while (true) {
-                int actual_length;
-                int result = libusb_interrupt_transfer(handle,
-                        interrupt_in.address,
-                        buffer.data(),
-                        buffer.size(),
-                        &actual_length,
-                        TIMEOUT_MS);
 
-                if (result == LIBUSB_SUCCESS && actual_length > 0) {
-                    std::cout << "Request received. Sending image..." << std::endl;
-                    if (send_image(handle, bulk_out)) {
-                        std::cout << "Ready for next request" << std::endl;
-                    }
-                }
-                else if (result != LIBUSB_ERROR_TIMEOUT) {
-                    std::cerr << "Interrupt transfer error: " << libusb_error_name(result) << std::endl;
-                    break;
-                }
-            }
 
-            started = 0;
 
-            libusb_release_interface(handle, 0);
-            libusb_close(handle);
-            libusb_exit(nullptr);
-            return;
+
         }
 };
 
