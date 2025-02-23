@@ -40,7 +40,6 @@ namespace RPICam {
     const static int save_to_file = 1;
     static int j;
 
-
     functionQueue funQ;
 
     static std::shared_ptr<Camera> camera;
@@ -57,6 +56,7 @@ namespace RPICam {
         std::cout << std::endl
             << "Queued Request: " << request->toString() << std::endl;
 
+        //TODO: determine if this mutex is no longer needed
         mutex.lock();
         //std::this_thread::sleep_for (std::chrono::seconds(1));
         std::cout << std::endl
@@ -421,10 +421,6 @@ namespace RPICam {
          * --------------------------------------------------------------------
          * Start Capture
          *
-         * In order to capture frames the Camera has to be started and
-         * Request queued to it. Enough Request to fill the Camera pipeline
-         * depth have to be queued before the Camera start delivering frames.
-         *
          * For each delivered frame, the Slot connected to the
          * Camera::requestCompleted Signal is called.
          */
@@ -437,31 +433,16 @@ namespace RPICam {
         }
 
         /*
-         * --------------------------------------------------------------------
          * Run an EventLoop
-         *
-         * In order to dispatch events received from the video devices, such
-         * as buffer completions, an event loop has to be run.
          */
         loop.timeout(TIMEOUT_SEC);
         //int ret = loop.exec();
         std::thread cameraThread(&EventLoop::exec, &loop);
         std::vector<std::unique_ptr<Request>> requests;
         cameraThread.detach();
-        /*
-           std::cout << "Capture ran for " << TIMEOUT_SEC << " seconds and "
-           << "stopped with exit status: " << ret << std::endl;
-           */
-
-
-
 
         /*
-         * --------------------------------------------------------------------
          * Clean Up
-         *
-         * Stop the Camera, release resources and stop the CameraManager.
-         * libcamera has now released all resources it owned.
          */
         camera->stop();
         allocator->free(stream);
@@ -475,8 +456,6 @@ namespace RPICam {
     void stop_taking_pictures() {
         loop.exit(0);
     }
-
-
-
+   
 };
 #endif

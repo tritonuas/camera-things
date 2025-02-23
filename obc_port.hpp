@@ -45,8 +45,11 @@ class OBCPort {
     public: 
 
         int camera_thread_started;
+        int quit_signal;
 
-
+        void quit() {
+            quit_signal = 1;
+        }
 
 
         bool send_image();
@@ -69,7 +72,7 @@ class OBCPort {
             if (sockfd < 0) {
                 std::cerr << "Socket creation failed" << std::endl;
                 shm_unlink("/demo_shm");
-                return 1;
+                return;
             }
 
             // Bind socket
@@ -81,22 +84,32 @@ class OBCPort {
             if (bind(sockfd, (const sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
                 std::cerr << "Bind failed" << std::endl;
                 close(sockfd);
-                munmap(shm_ptr, SHM_SIZE);
-                close(shm_fd);
-                shm_unlink("/demo_shm");
-                return 1;
+                return;
             }
 
-            std::cout << "Server ready, shared memory mapped..." << std::endl;
+            std::cout << "Server ready listening to requets" << std::endl;
 
             // Wait for request
             sockaddr_in client_addr{};
             socklen_t client_len = sizeof(client_addr);
             char request[10];
 
-            recvfrom(sockfd, request, sizeof(request), 0,
-                    (sockaddr*)&client_addr, &client_len);
+            while (!quit_signal) {
 
+                recvfrom(sockfd, request, sizeof(request), 0,
+                        (sockaddr*)&client_addr, &client_len);
+                std::cout << "Received image request" << std::endl;
+
+                //Tells the camera to send an additional image
+                RPICam::send_count_mutex.lock();
+                RPICam::send_count++;
+                RPICam::send_count_mutex.unlock();
+
+                
+            }
+            close(sockfd);
+        }
+        /**
             // Prepare and send header
             Header header;
             header.total_chunks = (SHM_SIZE + CHUNK_SIZE - 1) / CHUNK_SIZE;
@@ -132,13 +145,7 @@ class OBCPort {
             shm_unlink("/demo_shm");
             close(sockfd);
             return 0;
-
-
-
-
-
-
-        }
+            **/
 };
 
 #endif

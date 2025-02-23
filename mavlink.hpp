@@ -24,45 +24,46 @@
 #include "port.hpp"
 
 
-struct Mavlink_Messages {
+namespace Mavlink {
+    struct Mavlink_Messages {
 
-    int sysid;
-    int compid;
+        int sysid;
+        int compid;
 
-    // Heartbeat
-    mavlink_heartbeat_t heartbeat;
+        // Heartbeat
+        mavlink_heartbeat_t heartbeat;
 
-    // System Status
-    mavlink_sys_status_t sys_status;
+        // System Status
+        mavlink_sys_status_t sys_status;
 
-    // Radio Status
-    mavlink_radio_status_t radio_status;
+        // Radio Status
+        mavlink_radio_status_t radio_status;
 
-    // Local Position
-    mavlink_local_position_ned_t local_position_ned;
+        // Local Position
+        mavlink_local_position_ned_t local_position_ned;
 
-    // Global Position
-    mavlink_global_position_int_t global_position_int;
+        // Global Position
+        mavlink_global_position_int_t global_position_int;
 
-    // Local Position Target
-    mavlink_position_target_local_ned_t position_target_local_ned;
+        // Local Position Target
+        mavlink_position_target_local_ned_t position_target_local_ned;
 
-    // Global Position Target
-    mavlink_position_target_global_int_t position_target_global_int;
+        // Global Position Target
+        mavlink_position_target_global_int_t position_target_global_int;
 
-    // HiRes IMU
-    mavlink_highres_imu_t highres_imu;
+        // HiRes IMU
+        mavlink_highres_imu_t highres_imu;
 
-    // Attitude
-    mavlink_attitude_t attitude;
+        // Attitude
+        mavlink_attitude_t attitude;
 
-    // System Parameters?
-};
-
-
+        // System Parameters?
+    };
 
 
-class Mavlink {
+    void start_read_thread();
+
+
 
     Port *port;
 
@@ -70,8 +71,6 @@ class Mavlink {
 
     int result;
     pthread_t read_tid;
-    public: 
-
 
     char reading_status;
     char writing_status;
@@ -87,7 +86,7 @@ class Mavlink {
 
 
 
-    Mavlink(Port *port_) {
+    void mavlink(Port *port_) {
         // initialize attributes
         write_count = 0;
 
@@ -112,13 +111,13 @@ class Mavlink {
     //
 
     /*
-    void handle_heartbeat(); 
-    void handle_gps();
-    void handle_attitude(mavlink_message_t message) {
-        mavlink_msg_attitude_decode(message, current_messages.attitude);
-    }
+       void handle_heartbeat(); 
+       void handle_gps();
+       void handle_attitude(mavlink_message_t message) {
+       mavlink_msg_attitude_decode(message, current_messages.attitude);
+       }
 
-	*/
+*/
 
     void read_message() {
 
@@ -143,15 +142,18 @@ class Mavlink {
                     case MAVLINK_MSG_ID_HEARTBEAT:
                         {
                             printf("received heartbreak message");
+                            break;
 
                         }
                     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
                         {
                             printf("received gps message");
+                            break;
                         }
                     case MAVLINK_MSG_ID_ATTITUDE:
                         {
                             printf("received attitude message");
+                            break;
                         }
                     default:
                         {
@@ -253,21 +255,7 @@ class Mavlink {
 
     void stop() {
         time_to_exit = true;
-        pthread_join(read_tid, NULL);
     }
-
-    void start_read_thread() {
-        int result = pthread_create(&read_tid, NULL, &Mavlink::read_thread_entry, this);
-        printf("%d", result);
-    }
-
-    private:
-    static void* read_thread_entry(void* arg) {
-        Mavlink* self = static_cast<Mavlink*>(arg);
-        self->read_thread();  // Call the actual member function
-        return nullptr;
-    }
-
 
     void read_thread() {
 
@@ -284,6 +272,14 @@ class Mavlink {
         return;
     }
 
-};
+    void start_read_thread() {
+        std::thread mavlinkReadThread(read_thread);
+        mavlinkReadThread.detach();
+        std::cout << "Read thread started";
+    }
+
+
+}
+
 
 #endif

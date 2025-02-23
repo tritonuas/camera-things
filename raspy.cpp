@@ -12,7 +12,11 @@ int main() {
     obcPort.start_camera_thread();
 
     Port *port = new Port(UART_NAME, BAUDRATE); 
-    Mavlink mav(port);
+    Mavlink::mavlink(port);
+    Mavlink::start();
+
+    
+
 
     obcPort.start_listener();
 }
