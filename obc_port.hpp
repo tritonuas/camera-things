@@ -28,7 +28,7 @@
 
 const int CHUNK_SIZE = 1024;
 const char* SERVER_IP = "192.168.68.2";
-const int SERVER_PORT = 8888;
+const int SERVER_PORT = 25565;
 const size_t SHM_SIZE = 1024 * 1024;  // 1MB shared memory
 
 #pragma pack(push, 1)
@@ -75,6 +75,7 @@ class OBCPort {
                 return;
             }
 
+            /**
             // Bind socket
             sockaddr_in server_addr{};
             server_addr.sin_family = AF_INET;
@@ -88,17 +89,52 @@ class OBCPort {
             }
 
             std::cout << "Server ready listening to requets" << std::endl;
+            **/
+
+// Set SO_REUSEADDR to allow port reuse
+    int reuse = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+        std::cerr << "Setsockopt SO_REUSEADDR failed: " << strerror(errno) << std::endl;
+        close(sockfd);
+        return;
+    }
+
+    // Bind socket
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    
+    // Try binding to all interfaces first for testing
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY); // Use this instead of specific IP
+    
+    // Alternatively, use specific IP (check if it's correct)
+    // if (inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr) <= 0) {
+    //     std::cerr << "Invalid IP address: " << strerror(errno) << std::endl;
+    //     close(sockfd);
+    //     return;
+    // }
+
+    if (bind(sockfd, (const sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+        std::cerr << "Bind failed: " << strerror(errno) << std::endl;
+        close(sockfd);
+        return;
+    }
+
+    std::cout << "Server listening on " << SERVER_IP << ":" << SERVER_PORT << std::endl;
+
 
             // Wait for request
             sockaddr_in client_addr{};
             socklen_t client_len = sizeof(client_addr);
             char request[10];
 
+
+            quit_signal = 0;
             while (!quit_signal) {
 
                 recvfrom(sockfd, request, sizeof(request), 0,
                         (sockaddr*)&client_addr, &client_len);
-                std::cout << "Received image request" << std::endl;
+                std::cout << "Received image request: Incrementing counter" << std::endl;
 
                 //Tells the camera to send an additional image
                 RPICam::send_count_mutex.lock();

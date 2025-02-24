@@ -34,7 +34,6 @@ namespace RPICam {
     static std::mutex mutex;
     static int send_count;
     static std::mutex send_count_mutex;
-    static int test_increment;
     static int send_current;
     //TODO: save to file
     const static int save_to_file = 1;
@@ -61,8 +60,6 @@ namespace RPICam {
         //std::this_thread::sleep_for (std::chrono::seconds(1));
         std::cout << std::endl
             << "Processing Request: " << request->toString() << std::endl;
-        std::cout << "saveData Counter: " << test_increment;
-        test_increment++;
 
         /*
          * meta data stuff
@@ -111,6 +108,17 @@ namespace RPICam {
                     << ", offset=" << plane.offset << std::endl;
             }	
 
+            send_count_mutex.lock();
+            if (send_count >= 1) {
+                send_current = 1;
+                std::cout << "Sending the next image!\n\n\n";
+                send_count--;
+            }
+            else {
+                std::cout << "Skipping this image\n\n\n";
+            }
+            send_count_mutex.unlock();
+
             for (size_t i = 0; i < buffer->planes().size(); ++i) {
                 const FrameBuffer::Plane &plane = buffer->planes()[i];
                 int fd = plane.fd.get();   // File descriptor for the plane
@@ -129,12 +137,6 @@ namespace RPICam {
                     return;
                 }
 
-                send_count_mutex.lock();
-                if (send_count >= 1) {
-                    send_current = 1;
-                    send_count--;
-                }
-                send_count_mutex.unlock();
 
                 if (send_current) {
                     if (save_to_file) {
@@ -144,16 +146,16 @@ namespace RPICam {
                         file.write(static_cast<char *>(mappedMemory), length);
                         file.close();
 
-                        //std::cout << "Plane " << j << " saved to output_plane" << j << ".raw" << std::endl;
+                        std::cout << "Plane " << j << " saved to output_plane" << j << ".raw" << std::endl;
                         j++;
                     }
                 }
 
-                send_current = 0;
 
                 // Unmap the memory
                 munmap(mappedMemory, length);
             }
+            send_current = 0;
         }
 
         /* Re-queue the Request to the camera. */
@@ -228,7 +230,6 @@ namespace RPICam {
      * Creates the camera and configs it
      */
     void start() {
-        test_increment = 0;
         send_current = 0;
         j = 0;
         /*
@@ -415,7 +416,8 @@ namespace RPICam {
          */
         camera->requestCompleted.connect(requestComplete);
 
-        send_count = 0;
+        //TODO: chagne this back to normal value of 0
+        send_count = 40;
 
         /*
          * --------------------------------------------------------------------
@@ -439,7 +441,8 @@ namespace RPICam {
         //int ret = loop.exec();
         std::thread cameraThread(&EventLoop::exec, &loop);
         std::vector<std::unique_ptr<Request>> requests;
-        cameraThread.detach();
+        //cameraThread.detach();
+        cameraThread.join();
 
         /*
          * Clean Up
