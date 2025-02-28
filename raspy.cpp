@@ -1,5 +1,5 @@
+#include "simple-cam.cpp"
 #include "mavlink.cpp"
-#include "simple-cam.hpp"
 #include "mavlink.hpp"
 #include "obc_port.hpp"
 #include "function_queue.hpp"

@@ -26,7 +26,7 @@
 
 
 
-const int CHUNK_SIZE = 1024;
+const size_t CHUNK_SIZE = 1024;
 const char* SERVER_IP = "192.168.68.2";
 const int SERVER_PORT = 25565;
 const size_t SHM_SIZE = 1024 * 1024;  // 1MB shared memory
@@ -47,15 +47,23 @@ class OBCPort {
     public: 
 
         int camera_thread_started;
+        static inline int started = 0;
         int quit_signal;
 
         void quit() {
             quit_signal = 1;
         }
 
+        static inline int sockfd;
 
+        //TODO: don't make this shit inline when transfering over to
+        // the cpp file
+        static inline sockaddr_in client_addr{};
+        static inline socklen_t client_len;
+
+
+        
         bool send_image(char* ptr, const size_t map_size) {
-            /**
             size_t total_sent = 0;
             size_t remaining;
             while (total_sent < map_size) {
@@ -63,8 +71,8 @@ class OBCPort {
                 size_t send_size = std::min(remaining, CHUNK_SIZE);
 
                 ssize_t sent = sendto(sockfd, ptr + total_sent, send_size, 0,
-                        (const struct sockaddr*)&dest_addr, 
-                        sizeof(dest_addr));
+                        (const struct sockaddr*)&client_addr, 
+                        client_len);
 
                 if (sent < 0) {
                     return false;
@@ -73,7 +81,6 @@ class OBCPort {
                 total_sent += sent;
             }
 
-            **/
             return false;
         }
 
@@ -84,15 +91,17 @@ class OBCPort {
             cameraThread.detach();
         }
 
-
         void start_listener() {
 
+            /**
             if (!camera_thread_started) {
                 std::cout << "Camera thread needs to be started";
                 return;
             }
+            **/
 
-            int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+            client_len = sizeof(client_addr);
+            sockfd = socket(AF_INET, SOCK_DGRAM, 0);
             if (sockfd < 0) {
                 std::cerr << "Socket creation failed" << std::endl;
                 shm_unlink("/demo_shm");
@@ -147,8 +156,6 @@ class OBCPort {
             std::cout << "现在听：" << SERVER_IP << ":" << SERVER_PORT << std::endl;
 
             // Wait for request
-            sockaddr_in client_addr{};
-            socklen_t client_len = sizeof(client_addr);
             char request[1];
 
             quit_signal = 0;
@@ -158,11 +165,33 @@ class OBCPort {
                 recvfrom(sockfd, request, sizeof(request), 0,
                         (sockaddr*)&client_addr, &client_len);
                 std::cout << "受到了!" << std::endl;
+                
+                //(s)tart
+                if (request[0] == 's') {
+                    std::cout << "开始！";
+                    start_camera_thread();
+                }
+                
+                //(p)icture
+                if (request[0] == 'p') {
+                    RPICam::send_count_mutex.lock();
+                    RPICam::send_count++;
+                    RPICam::send_count_mutex.unlock();
+                    std::cout << "照相！";
+                }
 
-                //Tells the camera to send an additional image
-                RPICam::send_count_mutex.lock();
-                RPICam::send_count++;
-                RPICam::send_count_mutex.unlock();
+                //(e)nd
+                if (request[0] == 'e') {
+                    std::cout << "结束";
+                    quit();
+                }
+
+                //(l)ock controls
+                if (request[0] == 'l') {
+                    std::cout << "lock the controls";
+                    //TODO: lock the controls
+                }
+
             }
 
             std::cout << "server关了";
