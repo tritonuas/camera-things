@@ -21,9 +21,10 @@
 #include "event_loop.h"
 #include "mavlink.hpp"
 #include "function_queue.hpp"
+//#include "obc_port.hpp"
 
 #define TIMEOUT_SEC 10000
-#define BUFFER_COUNT 3
+#define BUFFER_COUNT 8
 
 using namespace libcamera;
 
@@ -35,7 +36,7 @@ namespace RPICam {
     static int send_count;
     static std::mutex send_count_mutex;
     static int send_current;
-    //TODO: save to file
+
     const static int save_to_file = 1;
     static int j;
 
@@ -51,35 +52,44 @@ namespace RPICam {
      * done in a different thread
      */
 
+    
     static void saveData(Request *request) {
-        std::cout << std::endl
-            << "Queued Request: " << request->toString() << std::endl;
 
         //TODO: determine if this mutex is no longer needed
         mutex.lock();
         //std::this_thread::sleep_for (std::chrono::seconds(1));
-        std::cout << std::endl
-            << "Processing Request: " << request->toString() << std::endl;
 
         /*
          * meta data stuff
          */
-        /*
-           const ControlList &requestMetadata = request->metadata();
-           for (const auto &ctrl : requestMetadata) {
-           const ControlId *id = controls::controls.at(ctrl.first);
-           const ControlValue &value = ctrl.second;
+        const ControlList &requestMetadata = request->metadata();
+        for (const auto &ctrl : requestMetadata) {
+            const ControlId *id = controls::controls.at(ctrl.first);
+            const ControlValue &value = ctrl.second;
 
-           std::cout << "\t" << id->name() << " = " << value.toString()
-           << std::endl;
-           }
-           */
+            std::cout << "\t" << id->name() << " = " << value.toString()
+                << std::endl;
+        }
 
         /*
          * Buffer info
          */
         const Request::BufferMap &buffers = request->buffers();
         for (auto bufferPair : buffers) {
+
+            send_count_mutex.lock();
+            if (send_count >= 1) {
+                send_current = 1;
+                std::cout << "发下个照片！\n";
+                send_count--;
+            }
+            else {
+                std::cout << "会跳这个照片\n";
+                send_count_mutex.unlock();
+                break;
+            }
+            send_count_mutex.unlock();
+
 
             // (Unused) Stream *stream = bufferPair.first;
             FrameBuffer *buffer = bufferPair.second;
@@ -91,6 +101,7 @@ namespace RPICam {
             std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
                 << " timestamp: " << metadata.timestamp
                 << " bytesused: ";
+
 
             unsigned int nplane = 0;
             for (const FrameMetadata::Plane &plane : metadata.planes()) {
@@ -108,16 +119,6 @@ namespace RPICam {
                     << ", offset=" << plane.offset << std::endl;
             }	
 
-            send_count_mutex.lock();
-            if (send_count >= 1) {
-                send_current = 1;
-                std::cout << "Sending the next image!\n\n\n";
-                send_count--;
-            }
-            else {
-                std::cout << "Skipping this image\n\n\n";
-            }
-            send_count_mutex.unlock();
 
             for (size_t i = 0; i < buffer->planes().size(); ++i) {
                 const FrameBuffer::Plane &plane = buffer->planes()[i];
@@ -151,7 +152,6 @@ namespace RPICam {
                     }
                 }
 
-
                 // Unmap the memory
                 munmap(mappedMemory, length);
             }
@@ -159,8 +159,10 @@ namespace RPICam {
         }
 
         /* Re-queue the Request to the camera. */
-        std::cout << std::endl
-            << "Finished Processing Request: " << request->toString() << std::endl;
+        /**
+          std::cout << std::endl
+          << "Finished Processing Request: " << request->toString() << std::endl;
+         **/
         request->reuse(Request::ReuseBuffers);
         camera->queueRequest(request);
         mutex.unlock();
@@ -173,9 +175,9 @@ namespace RPICam {
 
         funQ.push_back_function(saveData, request);
         /**
-        std::thread saveThread(saveData, request);
-        saveThread.detach();
-        */
+          std::thread saveThread(saveData, request);
+          saveThread.detach();
+          */
     }
 
     static void requestComplete(Request *request) {
@@ -270,6 +272,7 @@ namespace RPICam {
          * Config the stream
          */
         StreamConfiguration &streamConfig = config->at(0);
+        streamConfig.size = { 2028, 1520 };
         std::cout << "Default Raw configuration is: "
             << streamConfig.toString() << std::endl;
         streamConfig.bufferCount = BUFFER_COUNT;
@@ -416,8 +419,7 @@ namespace RPICam {
          */
         camera->requestCompleted.connect(requestComplete);
 
-        //TODO: chagne this back to normal value of 0
-        send_count = 40;
+        send_count = 0;
 
         /*
          * --------------------------------------------------------------------
@@ -459,6 +461,6 @@ namespace RPICam {
     void stop_taking_pictures() {
         loop.exit(0);
     }
-   
+
 };
 #endif

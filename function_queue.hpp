@@ -31,7 +31,7 @@ class functionQueue {
         template <typename Func, typename... Args>
         void push_back_function(Func&& func, Args&&... args) {
 
-            std::cout << "function added to the quueue";
+            //std::cout << "function added to the quueue";
             function_queue_mutex.lock();
             function_queue.push_back([=]() { func(args...); });
             function_queue_mutex.unlock();
@@ -40,7 +40,7 @@ class functionQueue {
         template <typename Func, typename... Args>
         void push_front_function(Func&& func, Args&&... args) {
 
-            std::cout << "function added to the quueue";
+            //std::cout << "function added to the quueue";
             function_queue_mutex.lock();
             function_queue.emplace_front([=]() { func(args...); });
             function_queue_mutex.unlock();
@@ -51,7 +51,7 @@ class functionQueue {
         bool runOne() {
             std::function<void()> tempFunc;    
             if (function_queue.empty()) {
-                std::cout << "function queue empty";
+                //std::cout << "function queue empty";
                 return true;
             }
 
@@ -59,7 +59,7 @@ class functionQueue {
             tempFunc = std::move(function_queue.front());
             function_queue.pop_front();
             function_queue_mutex.unlock();
-            std::cout << "ran one function";
+            //std::cout << "ran one function";
             tempFunc();
 
             return function_queue.empty();
@@ -68,9 +68,9 @@ class functionQueue {
         void runLoop() {
             quit_signal = 0;
             while (!quit_signal) {
-                std::cout << "askdj";
+                //std::cout << "askdj";
                 runOne();
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
         }
 
