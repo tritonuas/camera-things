@@ -8,7 +8,8 @@ namespace OBCPort {
         quit_signal = 1;
     }
 
-    bool send_image(char* ptr, const size_t map_size) {
+    bool send_image(void* data_ptr, const size_t map_size) {
+        char* ptr = static_cast<char*>(data_ptr);
         size_t total_sent = 0;
         size_t remaining;
         while (total_sent < map_size) {

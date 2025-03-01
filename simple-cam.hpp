@@ -21,7 +21,7 @@
 #include "event_loop.h"
 #include "mavlink.hpp"
 #include "function_queue.hpp"
-//#include "obc_port.hpp"
+#include "obc_port.hpp"
 
 #define TIMEOUT_SEC 10000
 #define BUFFER_COUNT 8
@@ -36,8 +36,6 @@ namespace RPICam {
     static int send_count;
     static std::mutex send_count_mutex;
     static int send_current;
-
-    static OBCPort obc_port;
 
     const static int save_to_file = 0;
     static int j;

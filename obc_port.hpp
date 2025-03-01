@@ -45,7 +45,7 @@ struct Header {
 namespace OBCPort {
 
     int camera_thread_started;
-    static int started = 0;
+    //int started = 0;
     int quit_signal;
 
     void quit();
@@ -57,7 +57,7 @@ namespace OBCPort {
     static sockaddr_in client_addr{};
     static socklen_t client_len;
 
-    bool send_image(char* ptr, const size_t map_size);
+    bool send_image(void* ptr, const size_t map_size);
 
     void start_camera_thread();
 
