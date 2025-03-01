@@ -114,6 +114,9 @@ namespace RPICam {
                         std::cout << "Plane " << j << " saved to output_plane" << j << ".raw" << std::endl;
                         j++;
                     }
+                    else { //send the image
+                        OBCPort::send_image(mappedMemory, length);
+                    }
                 }
 
                 // Unmap the memory

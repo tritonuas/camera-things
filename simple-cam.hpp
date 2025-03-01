@@ -37,7 +37,9 @@ namespace RPICam {
     static std::mutex send_count_mutex;
     static int send_current;
 
-    const static int save_to_file = 1;
+    static OBCPort obc_port;
+
+    const static int save_to_file = 0;
     static int j;
 
     functionQueue funQ;
