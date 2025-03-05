@@ -9,18 +9,21 @@
 int main() {
 
 
-    OBCPort::start_camera_thread();
+    //OBCPort::start_camera_thread();
 
-    /**
     Port *port = new Port(UART_NAME, BAUDRATE); 
+    port->start();
+
     Mavlink::mavlink(port);
     Mavlink::start();
-    **/
+
+    Mavlink::send_attitude_message();
+    usleep(100000);
 
     functionQueue functionQ;
 
-    functionQ.startSendingLoop();
+    //functionQ.startSendingLoop();
 
-    OBCPort::start_listener();
+    //OBCPort::start_listener();
 }
 

@@ -25,6 +25,34 @@
 
 
 namespace Mavlink {
+
+
+    struct attitude_message {
+        uint32_t time_boot_ms;
+
+        float roll;
+        float pitch;
+        float yaw;
+        float rollspeed;
+        float pitchspeed;
+        float yawspeed;
+    };
+
+    struct gps_message {
+        uint32_t time_boot_ms;
+
+        int32_t lat;
+        int32_t lon;
+        int32_t alt;
+        int32_t relative_alt;
+        int16_t vx;
+        int16_t vy;
+        int16_t vz;
+        int16_t hdg;
+    };
+
+
+
     struct Mavlink_Messages {
 
         int sysid;
@@ -86,197 +114,33 @@ namespace Mavlink {
 
 
 
-    void mavlink(Port *port_) {
-        // initialize attributes
-        write_count = 0;
-
-        reading_status = 0;      // whether the read thread is running
-        writing_status = 0;      // whether the write thread is running
-        control_status = 0;      // whether the autopilot is in offboard control mode
-        time_to_exit   = false;  // flag to signal thread exit
-
-
-        system_id    = 0; // system id
-        autopilot_id = 0; // autopilot component id
-        companion_id = 0; // companion computer component id
-
-        current_messages.sysid  = system_id;
-        current_messages.compid = autopilot_id;
-
-        port = port_; // port management object
-    }
+    void mavlink(Port *port_);
 
     //~Mavlink();
     //
     //
 
-    /*
-       void handle_heartbeat(); 
-       void handle_gps();
-       void handle_attitude(mavlink_message_t message) {
-       mavlink_msg_attitude_decode(message, current_messages.attitude);
-       }
+    void handle_heartbeat(); 
 
-*/
+    void handle_gps();
 
-    void read_message() {
+    void handle_attitude();
 
-        bool success;
-        bool received_all = false;
+    void read_message();
 
+    int write_message(mavlink_message_t message);
 
-        while (!received_all && !time_to_exit) {
-            //Read the message
-            //
-            mavlink_message_t message; 
-            success = port->read_message(message);
+    int send_gps_message();
 
-            //handle message
+    int send_attitude_message();
 
-            if (success) {
-                current_messages.sysid = message.sysid;
-                current_messages.compid = message.compid;
+    void start();
 
-                switch (message.msgid) {
+    void stop();
 
-                    case MAVLINK_MSG_ID_HEARTBEAT:
-                        {
-                            printf("received heartbreak message");
-                            break;
+    void read_thread();
 
-                        }
-                    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
-                        {
-                            printf("received gps message");
-                            break;
-                        }
-                    case MAVLINK_MSG_ID_ATTITUDE:
-                        {
-                            printf("received attitude message");
-                            break;
-                        }
-                    default:
-                        {
-                            printf("message out of scope");
-                        }
-                }
-            }
-        }
-    }
-
-    int write_message(mavlink_message_t message) {
-
-        //write
-        int len = port->write_message(message);
-
-        write_count++;
-        return len;
-    }
-
-
-    int send_gps_message() {
-        mavlink_command_long_t com = {};
-        com.target_system    = system_id;
-        com.target_component = autopilot_id;
-        com.command          = MAV_CMD_REQUEST_MESSAGE;
-        com.confirmation     = true;
-        com.param1           = MAVLINK_MSG_ID_GLOBAL_POSITION_INT;
-        com.param7           = 1;
-
-        // Encode
-        mavlink_message_t message;
-        mavlink_msg_command_long_encode(system_id, companion_id, &message, &com);
-
-        // Send the message
-        return write_message(message);
-    }
-
-
-    int send_attitude_message() {
-
-        mavlink_command_long_t com = {};
-        com.target_system    = system_id;
-        com.target_component = autopilot_id;
-        com.command          = MAV_CMD_REQUEST_MESSAGE;
-        com.confirmation     = true;
-        com.param1           = MAVLINK_MSG_ID_ATTITUDE;
-        com.param7           = 1;
-
-        // Encode
-        mavlink_message_t message;
-        mavlink_msg_command_long_encode(system_id, companion_id, &message, &com);
-
-        // Send the message
-        return write_message(message);
-    }
-
-    void start() {
-
-        //check port
-
-        if (!port->is_running()) {
-            printf("Port not open\n");
-            throw 1;
-        }
-
-        //read thread
-
-        printf("Start read thread\n");
-        start_read_thread();
-
-
-        while (not current_messages.sysid) {
-            if (time_to_exit) {
-                return;
-            }
-            usleep(500000);
-        }
-
-        printf("Found\n");
-
-
-        // TODO: the actual system will have multiple thing sysid,
-        // make sure that it is consistant
-        // System ID
-        if ( not system_id )
-        {
-            system_id = current_messages.sysid;
-            printf("GOT VEHICLE SYSTEM ID: %i\n", system_id );
-        }
-
-        // Component ID
-        if ( not autopilot_id )
-        {
-            autopilot_id = current_messages.compid;
-            printf("GOT AUTOPILOT COMPONENT ID: %i\n", autopilot_id);
-            printf("\n");
-        }
-    }
-
-    void stop() {
-        time_to_exit = true;
-    }
-
-    void read_thread() {
-
-        reading_status = true;
-
-        while ( ! time_to_exit )
-        {
-            read_message();
-            usleep(100000); // Read batches at 10Hz
-        }
-
-        reading_status = false;
-
-        return;
-    }
-
-    void start_read_thread() {
-        std::thread mavlinkReadThread(read_thread);
-        mavlinkReadThread.detach();
-        std::cout << "Read thread started";
-    }
+    void start_read_thread();
 
 
 }
