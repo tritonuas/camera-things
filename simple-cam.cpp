@@ -26,6 +26,7 @@ namespace RPICam {
         /*
          * meta data stuff
          */
+        /**
         const ControlList &requestMetadata = request->metadata();
         for (const auto &ctrl : requestMetadata) {
             const ControlId *id = controls::controls.at(ctrl.first);
@@ -34,6 +35,7 @@ namespace RPICam {
             std::cout << "\t" << id->name() << " = " << value.toString()
                 << std::endl;
         }
+        **/
 
         /*
          * Buffer info
@@ -57,16 +59,20 @@ namespace RPICam {
 
             // (Unused) Stream *stream = bufferPair.first;
             FrameBuffer *buffer = bufferPair.second;
-            const FrameMetadata &metadata = buffer->metadata();
+            //const FrameMetadata &metadata = buffer->metadata();
             std::cout << "\n";
             //std::cout << buffer;
 
             /* Print some information about the buffer which has completed. */
+            /**
             std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
                 << " timestamp: " << metadata.timestamp
                 << " bytesused: ";
+            **/
 
 
+
+            /**
             unsigned int nplane = 0;
             for (const FrameMetadata::Plane &plane : metadata.planes()) {
                 std::cout << plane.bytesused;
@@ -82,6 +88,7 @@ namespace RPICam {
                     << ", length=" << plane.length
                     << ", offset=" << plane.offset << std::endl;
             }	
+            **/
 
 
             for (size_t i = 0; i < buffer->planes().size(); ++i) {
@@ -115,6 +122,7 @@ namespace RPICam {
                         j++;
                     }
                     else { //send the image
+                        std::cout << "trying to send\n";
                         OBCPort::send_image(mappedMemory, length);
                     }
                 }

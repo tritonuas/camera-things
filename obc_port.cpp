@@ -9,6 +9,7 @@ namespace OBCPort {
     }
 
     bool send_image(void* data_ptr, const size_t map_size) {
+        //std::cout << "trying to send\n";
         char* ptr = static_cast<char*>(data_ptr);
         size_t total_sent = 0;
         size_t remaining;
@@ -25,7 +26,10 @@ namespace OBCPort {
             }
 
             total_sent += sent;
+            //std::cout << "Total sent: " << total_sent;
         }
+
+        std::cout<< "Total sent: " << total_sent << "\n";
 
         return false;
     }
@@ -119,7 +123,8 @@ namespace OBCPort {
             }
 
             //(p)icture
-            if (request[0] == 'p') {
+            //TODO: make it actually sort
+            if (1) {
                 RPICam::send_count_mutex.lock();
                 RPICam::send_count++;
                 RPICam::send_count_mutex.unlock();
