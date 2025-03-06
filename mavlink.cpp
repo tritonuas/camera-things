@@ -1,6 +1,7 @@
 #include "mavlink.hpp"
 
 
+
 namespace Mavlink {
 
     void mavlink(Port *port_) {
@@ -36,6 +37,7 @@ namespace Mavlink {
            return gps;
 
        }
+
        mavlink_attitude_t handle_attitude_message(mavlink_message_t* msg) {
            mavlink_attitude_t attitude;
 
@@ -43,6 +45,20 @@ namespace Mavlink {
 
            return attitude;
        }
+
+       void send_mavlink_message(mavlink_message_t msg) {
+           //uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+
+           void *buffer = mmap(NULL, MAVLINK_MAX_PACKET_LEN,
+                   PROT_READ | PROT_WRITE,
+                   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+
+           mavlink_msg_to_send_buffer(reinterpret_cast<uint8_t*>(buffer), &msg);
+
+           funQ.push_front_function(OBCPort::send_image,
+                   buffer, MAVLINK_MAX_PACKET_LEN);
+       }
+
 
        void print_gps(mavlink_global_position_int_t* msg) {
            std::cout << msg->time_boot_ms << "\n";
@@ -98,14 +114,18 @@ namespace Mavlink {
                     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
                         {
                             printf("received gps message\n");
+                            send_mavlink_message(message);
                             break;
                         }
                     case MAVLINK_MSG_ID_ATTITUDE:
                         {
                             printf("received attitude message\n");
+                            /**
                             mavlink_attitude_t temp_msg;
                             temp_msg = handle_attitude_message(&message);
                             print_attitude(&temp_msg);
+                            **/
+                            send_mavlink_message(message);
                             
                             break;
                         }

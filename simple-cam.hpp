@@ -60,6 +60,11 @@ namespace RPICam {
 
     static void requestComplete(Request *request); 
 
+    void lock_settings();
+
+    void unlock_settings();
+
+
     std::string cameraName(Camera *camera);
 
 

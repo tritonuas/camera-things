@@ -31,7 +31,7 @@ namespace OBCPort {
 
         std::cout<< "Total sent: " << total_sent << "\n";
 
-        return false;
+        return true;
     }
 
 

@@ -22,6 +22,7 @@
 #include <common/mavlink.h>
 
 #include "port.hpp"
+#include "function_queue.hpp"
 
 
 namespace Mavlink {
@@ -111,6 +112,8 @@ namespace Mavlink {
     uint64_t write_count;
 
     Mavlink_Messages current_messages;
+
+    functionQueue funQ;
 
 
 
