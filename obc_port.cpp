@@ -4,6 +4,7 @@
 namespace OBCPort {
 
 
+    int client_sock;
     void quit() {
         quit_signal = 1;
     }
@@ -12,29 +13,11 @@ namespace OBCPort {
         //std::cout << "trying to send\n";
         char* ptr = static_cast<char*>(data_ptr);
         size_t total_sent = 0;
-        size_t remaining;
+        //size_t remaining;
         int count = 0;
         while (total_sent < map_size && !quit_signal) {
-            /**
-            remaining = map_size  - total_sent;
-            size_t send_size = std::min(remaining, CHUNK_SIZE);
-
-            ssize_t sent = sendto(sockfd, ptr + total_sent, send_size, 0,
-                    (const struct sockaddr*)&client_addr, 
-                    client_len);
-
-            if (sent < 0) {
-                perror("send fail :sob:");
-                return false;
-            }
-
-            total_sent += sent;
-            //std::cout << "Total sent: " << total_sent;
-            //std::cout << "Count: " << count << "\n";
-            count++;
-            **/
-            ssize_t sent = send(client_sock, data + total_sent, 
-                               DATA_SIZE - total_sent, 0);
+            ssize_t sent = send(client_sock, ptr + total_sent, 
+                    map_size - total_sent, 0);
             if (sent < 0) {
                 perror("send failed");
                 break;
@@ -108,7 +91,7 @@ namespace OBCPort {
             std::cout << "Waiting for connection..." << std::endl;
             sockaddr_in client_addr{};
             socklen_t addrlen = sizeof(client_addr);
-            int client_sock = accept(server_fd, (sockaddr*)&client_addr, &addrlen);
+            client_sock = accept(server_fd, (sockaddr*)&client_addr, &addrlen);
 
             if (client_sock < 0) {
                 perror("accept failed");
@@ -125,15 +108,15 @@ namespace OBCPort {
 
                 std::cout << "在等" << std::endl;
 
-                char request[1];
-                ssize_t bytes = recv(client_sock, trigger, sizeof(trigger), 0);
+                char request[4];
+                ssize_t bytes = recv(client_sock, request, sizeof(request), 0);
 
                 if (bytes <= 0) {
                     perror("Connection closed or error");
                     break;
                 }
 
-                if (memcmp(trigger, "SEND", 4) != 0) {
+                if (memcmp(request, "SEND", 4) != 0) {
                     std::cerr << "Invalid request received" << std::endl;
                     continue;
                 }
@@ -172,6 +155,7 @@ namespace OBCPort {
             std::cout << "server关了";
             close(client_sock);
         }
+    }
         /**
         // Prepare and send header
         Header header;

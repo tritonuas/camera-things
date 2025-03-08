@@ -25,5 +25,7 @@ int main() {
     functionQ.startSendingLoop();
 
     OBCPort::start_listener();
+    
+    return 0;
 }
 

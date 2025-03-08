@@ -51,12 +51,12 @@ namespace OBCPort {
 
     void quit();
 
-    static int sockfd;
+    //static int sockfd;
 
     //TODO: don't make this shit  when transfering over to
     // the cpp file
-    static sockaddr_in client_addr{};
-    static socklen_t client_len;
+    //static sockaddr_in client_addr{};
+    //static socklen_t client_len;
 
     bool send_image(void* ptr, const size_t map_size);
 
