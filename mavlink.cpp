@@ -120,11 +120,9 @@ namespace Mavlink {
                     case MAVLINK_MSG_ID_ATTITUDE:
                         {
                             printf("received attitude message\n");
-                            /**
                             mavlink_attitude_t temp_msg;
                             temp_msg = handle_attitude_message(&message);
                             print_attitude(&temp_msg);
-                            **/
                             send_mavlink_message(message);
                             
                             break;
@@ -183,6 +181,11 @@ namespace Mavlink {
 
         // Send the message
         return write_message(message);
+    }
+
+    void send_both_messages() {
+        send_attitude_message();
+        send_gps_message();
     }
 
     void start() {

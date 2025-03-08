@@ -13,6 +13,7 @@ namespace OBCPort {
         char* ptr = static_cast<char*>(data_ptr);
         size_t total_sent = 0;
         size_t remaining;
+        int count = 0;
         while (total_sent < map_size) {
             remaining = map_size  - total_sent;
             size_t send_size = std::min(remaining, CHUNK_SIZE);
@@ -27,9 +28,12 @@ namespace OBCPort {
 
             total_sent += sent;
             //std::cout << "Total sent: " << total_sent;
+            //std::cout << "Count: " << count << "\n";
+            count++;
         }
 
         std::cout<< "Total sent: " << total_sent << "\n";
+        std::cout << "Count: " << count << "\n";
 
         return true;
     }

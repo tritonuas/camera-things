@@ -26,8 +26,9 @@
 
 
 
-const size_t CHUNK_SIZE = 1024;
+const size_t CHUNK_SIZE = 512;
 const char* SERVER_IP = "192.168.68.2";
+//const char* SERVER_IP = "10.241.90.10";
 const int SERVER_PORT = 25565;
 const size_t SHM_SIZE = 1024 * 1024;  // 1MB shared memory
                                       //const size_t CHUNK_SIZE = 512;

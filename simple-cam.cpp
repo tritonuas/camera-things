@@ -48,9 +48,10 @@ namespace RPICam {
                 send_current = 1;
                 std::cout << "发下个照片！\n";
                 send_count--;
+                Mavlink::send_both_messages();
             }
             else {
-                std::cout << "会跳这个照片\n";
+                //std::cout << "会跳这个照片\n";
                 send_count_mutex.unlock();
                 break;
             }
@@ -111,6 +112,9 @@ namespace RPICam {
 
 
                 if (send_current) {
+
+                    std::cout << "Get the mavlink\n";
+
                     if (save_to_file) {
                         // Save the mapped memory to a file
                         std::ofstream file("out/output_plane" + std::to_string(j) + ".raw", std::ios::binary);
@@ -145,20 +149,19 @@ namespace RPICam {
     }
 
     static void processRequest(Request *request) {
+        /**
         std::cout << std::endl
             << "Request completed: " << request->toString() << std::endl;
+            **/
 
         funQ.push_back_function(saveData, request);
-        /**
-          std::thread saveThread(saveData, request);
-          saveThread.detach();
-          */
     }
 
     static void requestComplete(Request *request) {
         if (request->status() == Request::RequestCancelled) {
             return;
         }
+
 
         loop.callLater(std::bind(&processRequest, request));
     }

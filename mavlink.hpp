@@ -117,6 +117,8 @@ namespace Mavlink {
 
 
 
+
+
     void mavlink(Port *port_);
 
     //~Mavlink();
@@ -136,6 +138,8 @@ namespace Mavlink {
     int send_gps_message();
 
     int send_attitude_message();
+
+    void send_both_messages();
 
     void start();
 

@@ -9,7 +9,7 @@
 int main() {
 
 
-    //OBCPort::start_camera_thread();
+    OBCPort::start_camera_thread();
 
     Port *port = new Port(UART_NAME, BAUDRATE); 
     port->start();
@@ -22,8 +22,8 @@ int main() {
 
     functionQueue functionQ;
 
-    //functionQ.startSendingLoop();
+    functionQ.startSendingLoop();
 
-    //OBCPort::start_listener();
+    OBCPort::start_listener();
 }
 
