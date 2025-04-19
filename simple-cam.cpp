@@ -72,7 +72,6 @@ namespace RPICam {
             **/
 
 
-
             /**
             unsigned int nplane = 0;
             for (const FrameMetadata::Plane &plane : metadata.planes()) {
@@ -149,15 +148,15 @@ namespace RPICam {
     }
 
     static void processRequest(Request *request) {
-        /**
         std::cout << std::endl
             << "Request completed: " << request->toString() << std::endl;
-            **/
 
         funQ.push_back_function(saveData, request);
     }
 
-    static void requestComplete(Request *request) {
+
+
+static void requestComplete(Request *request) {
         if (request->status() == Request::RequestCancelled) {
             return;
         }

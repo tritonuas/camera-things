@@ -10,6 +10,7 @@ namespace OBCPort {
     }
 
     bool send_image(void* data_ptr, const size_t map_size) {
+        std::cout << "要发照片\n";
         //std::cout << "trying to send\n";
         char* ptr = static_cast<char*>(data_ptr);
         size_t total_sent = 0;
@@ -19,10 +20,12 @@ namespace OBCPort {
             ssize_t sent = send(client_sock, ptr + total_sent, 
                     map_size - total_sent, 0);
             if (sent < 0) {
+                std::cout << "wtf\n";
                 perror("send failed");
                 break;
             }
             total_sent += sent;
+            std::cout << "啊啊啊";
         }
 
         std::cout<< "Total sent: " << total_sent << "\n";
@@ -58,7 +61,7 @@ namespace OBCPort {
 
         int opt = 1;
         setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-        int snd_buf = 1048576; // 1MB
+        int snd_buf = 1048576 * 5; // 1MB
         setsockopt(server_fd, SOL_SOCKET, SO_SNDBUF, &snd_buf, sizeof(snd_buf));
 
 
@@ -89,8 +92,7 @@ namespace OBCPort {
 
 
             std::cout << "Waiting for connection..." << std::endl;
-            sockaddr_in client_addr{};
-            socklen_t addrlen = sizeof(client_addr);
+            addrlen = sizeof(client_addr);
             client_sock = accept(server_fd, (sockaddr*)&client_addr, &addrlen);
 
             if (client_sock < 0) {
@@ -103,7 +105,6 @@ namespace OBCPort {
             std::cout << "Client connected. Waiting for requests..." << std::endl;
 
 
-
             while (!quit_signal) {
 
                 std::cout << "在等" << std::endl;
@@ -113,13 +114,10 @@ namespace OBCPort {
 
                 if (bytes <= 0) {
                     perror("Connection closed or error");
+                    std::cout << "connection closed\n";
                     break;
                 }
 
-                if (memcmp(request, "SEND", 4) != 0) {
-                    std::cerr << "Invalid request received" << std::endl;
-                    continue;
-                }
 
                 std::cout << "受到了!" << std::endl;
 
@@ -131,7 +129,7 @@ namespace OBCPort {
 
                 //(p)icture
                 //TODO: make it actually sort
-                if (1) {
+                if (request[0] == 'I') {
                     RPICam::send_count_mutex.lock();
                     RPICam::send_count++;
                     RPICam::send_count_mutex.unlock();
@@ -156,42 +154,6 @@ namespace OBCPort {
             close(client_sock);
         }
     }
-        /**
-        // Prepare and send header
-        Header header;
-        header.total_chunks = (SHM_SIZE + CHUNK_SIZE - 1) / CHUNK_SIZE;
-        header.mem_size = SHM_SIZE;
 
-        Header net_header = header;
-        net_header.magic = htonl(net_header.magic);
-        net_header.total_chunks = htonl(net_header.total_chunks);
-        net_header.mem_size = htonl(net_header.mem_size);
-
-        sendto(sockfd, &net_header, sizeof(net_header), 0,
-        (const sockaddr*)&client_addr, client_len);
-
-        // Send memory chunks
-        for (uint32_t i = 0; i < header.total_chunks; ++i) {
-        const size_t offset = i * CHUNK_SIZE;
-        const size_t remaining = SHM_SIZE - offset;
-        const size_t send_size = (remaining > CHUNK_SIZE) ? CHUNK_SIZE : remaining;
-
-        std::vector<char> chunk(sizeof(uint32_t) + send_size);
-         *(uint32_t*)chunk.data() = htonl(i);
-         memcpy(chunk.data() + sizeof(uint32_t), shm_ptr + offset, send_size);
-
-         sendto(sockfd, chunk.data(), chunk.size(), 0,
-         (const sockaddr*)&client_addr, client_len);
-         }
-
-         std::cout << "Memory region sent" << std::endl;
-
-        // Cleanup
-        munmap(shm_ptr, SHM_SIZE);
-        close(shm_fd);
-        shm_unlink("/demo_shm");
-        close(sockfd);
-        return 0;
-         **/
-    };
+};
 

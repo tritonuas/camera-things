@@ -107,7 +107,7 @@ namespace Mavlink {
 
                     case MAVLINK_MSG_ID_HEARTBEAT:
                         {
-                            printf("received heartbreak message\n");
+                            //printf("received heartbreak message\n");
                             break;
 
                         }
@@ -120,17 +120,17 @@ namespace Mavlink {
                     case MAVLINK_MSG_ID_ATTITUDE:
                         {
                             printf("received attitude message\n");
-                            mavlink_attitude_t temp_msg;
-                            temp_msg = handle_attitude_message(&message);
-                            print_attitude(&temp_msg);
+                            //mavlink_attitude_t temp_msg;
+                            //temp_msg = handle_attitude_message(&message);
+                            //print_attitude(&temp_msg);
                             send_mavlink_message(message);
                             
                             break;
                         }
                     default:
                         {
-                            printf("message out of scope");
-                            std::cout << "Message id" << message.msgid << "\n";
+                            //printf("message out of scope");
+                            //std::cout << "Message id" << message.msgid << "\n";
                         }
                 }
             }

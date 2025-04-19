@@ -15,10 +15,10 @@ int main() {
     port->start();
 
     Mavlink::mavlink(port);
-    Mavlink::start();
+    //Mavlink::start();
 
-    Mavlink::send_attitude_message();
-    usleep(100000);
+    //Mavlink::send_attitude_message();
+    //usleep(100000);
 
     functionQueue functionQ;
 

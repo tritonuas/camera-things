@@ -24,7 +24,7 @@
 #include "obc_port.hpp"
 
 #define TIMEOUT_SEC 10000
-#define BUFFER_COUNT 8
+#define BUFFER_COUNT 3
 
 using namespace libcamera;
 
