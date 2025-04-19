@@ -15,8 +15,12 @@ namespace RPICam {
      * Heavy processing should not be done in this function and instead
      * done in a different thread
      */
+    ControlList controlList_copy;
+    int image_count = 0;
 
 
+
+    //if the settings are locked
     static void saveData(Request *request) {
 
         //TODO: determine if this mutex is no longer needed
@@ -26,7 +30,14 @@ namespace RPICam {
         /*
          * meta data stuff
          */
-        /**
+        if (do_save_settings) {
+            copy_controls(&controlList_copy, &request->metadata(), 0);
+            do_save_settings = 0;
+        }
+
+
+
+
         const ControlList &requestMetadata = request->metadata();
         for (const auto &ctrl : requestMetadata) {
             const ControlId *id = controls::controls.at(ctrl.first);
@@ -35,7 +46,7 @@ namespace RPICam {
             std::cout << "\t" << id->name() << " = " << value.toString()
                 << std::endl;
         }
-        **/
+
 
         /*
          * Buffer info
@@ -66,29 +77,29 @@ namespace RPICam {
 
             /* Print some information about the buffer which has completed. */
             /**
-            std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
-                << " timestamp: " << metadata.timestamp
-                << " bytesused: ";
-            **/
+              std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
+              << " timestamp: " << metadata.timestamp
+              << " bytesused: ";
+             **/
 
 
             /**
-            unsigned int nplane = 0;
-            for (const FrameMetadata::Plane &plane : metadata.planes()) {
-                std::cout << plane.bytesused;
-                if (++nplane < metadata.planes().size()) {
-                    std::cout << "/";
-                }
-            }
+              unsigned int nplane = 0;
+              for (const FrameMetadata::Plane &plane : metadata.planes()) {
+              std::cout << plane.bytesused;
+              if (++nplane < metadata.planes().size()) {
+              std::cout << "/";
+              }
+              }
 
-            std::cout << "Buffer planes: " << buffer->planes().size() << std::endl;
-            for (size_t i = 0; i < buffer->planes().size(); ++i) {
-                const FrameBuffer::Plane &plane = buffer->planes()[i];
-                std::cout << "Plane " << i << ": fd=" << plane.fd.get()
-                    << ", length=" << plane.length
-                    << ", offset=" << plane.offset << std::endl;
-            }	
-            **/
+              std::cout << "Buffer planes: " << buffer->planes().size() << std::endl;
+              for (size_t i = 0; i < buffer->planes().size(); ++i) {
+              const FrameBuffer::Plane &plane = buffer->planes()[i];
+              std::cout << "Plane " << i << ": fd=" << plane.fd.get()
+              << ", length=" << plane.length
+              << ", offset=" << plane.offset << std::endl;
+              }	
+             **/
 
 
             for (size_t i = 0; i < buffer->planes().size(); ++i) {
@@ -142,9 +153,20 @@ namespace RPICam {
           << "Finished Processing Request: " << request->toString() << std::endl;
          **/
         request->reuse(Request::ReuseBuffers);
+
+        if (settings_locked) {
+            ControlList &controls = request->controls();
+            copy_controls(&controls, &controlList_copy, 0);
+        }
+        //TODO: for testing
+        image_count++;
+        if (image_count == 100) {
+            lock_settings();
+            std::cout << "Locked the settings";
+        }
+
         camera->queueRequest(request);
         mutex.unlock();
-
     }
 
     static void processRequest(Request *request) {
@@ -156,7 +178,7 @@ namespace RPICam {
 
 
 
-static void requestComplete(Request *request) {
+    static void requestComplete(Request *request) {
         if (request->status() == Request::RequestCancelled) {
             return;
         }
@@ -342,8 +364,16 @@ static void requestComplete(Request *request) {
          * that applications can access and for each of them a list of metadata
          * properties that reports the capture parameters applied to the image.
          */
+
+
+
+
         Stream *stream = streamConfig.stream();
         const std::vector<std::unique_ptr<FrameBuffer>> &buffers = allocator->buffers(stream);
+
+        //Array of the requests
+        const std::unique_ptr<Request> request_arr[buffers.size()];
+
         for (unsigned int i = 0; i < buffers.size(); ++i) {
             std::unique_ptr<Request> request = camera->createRequest();
             if (!request)
@@ -435,4 +465,43 @@ static void requestComplete(Request *request) {
         loop.exit(0);
     }
 
+    void lock_settings() {
+        do_save_settings = 1;
+        settings_locked = 1;
+
+    }
+
+    void save_settings();
+    void load_settins();
+
+    /**
+     * TODO: askk about the order of out and in 
+     * (which one shouuld be first and second)
+     * Makes a deep copy of the metadata (controls)
+     * set all > 0 if everything should be copied
+     * else, only the inputs are copied
+     */
+    void copy_controls(ControlList *list_out, ControlList *list_in, int all) {
+        list_out->clear();
+        int skip = 0;
+        for (const auto &ctrl : *list_in) {
+            const ControlId *id = controls::controls.at(ctrl.first);
+            const ControlValue &value = ctrl.second;
+
+            
+            if (all || id->isInput()) {
+                for (const uint invalid_id : invalid_controls) {
+                    if (invalid_id == id->id()) {
+                        skip = 1;
+                    }
+                }
+                if (!skip) {
+                    list_out->set(id->id(), ControlValue(value));
+                }
+                skip = 0;
+                //std::cout << "COPYING: \t\t\t" << id->name() << "ID: " << id->id() << " = " << value.toString() << std::endl;
+            }
+        }
+
+    }
 };

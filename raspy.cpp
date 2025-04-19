@@ -14,7 +14,7 @@ int main() {
     Port *port = new Port(UART_NAME, BAUDRATE); 
     port->start();
 
-    Mavlink::mavlink(port);
+    //Mavlink::mavlink(port);
     //Mavlink::start();
 
     //Mavlink::send_attitude_message();

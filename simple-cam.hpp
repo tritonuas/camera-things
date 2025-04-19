@@ -40,6 +40,14 @@ namespace RPICam {
     const static int save_to_file = 0;
     static int j;
 
+    static int settings_locked;
+    int do_save_settings;
+
+
+    //camera fucked idk
+    unsigned int invalid_controls[] = {0x18, 0x1a};
+
+
     functionQueue funQ;
 
     std::vector<std::unique_ptr<Request>> requests;
@@ -73,6 +81,9 @@ namespace RPICam {
     void start();
 
     void stop_taking_pictures();
+    
+    void copy_controls(libcamera::ControlList *list_out,
+            libcamera::ControlList *list_in, int all);
 
 };
 #endif
