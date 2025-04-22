@@ -35,9 +35,7 @@ namespace RPICam {
             do_save_settings = 0;
         }
 
-
-
-
+        /**
         const ControlList &requestMetadata = request->metadata();
         for (const auto &ctrl : requestMetadata) {
             const ControlId *id = controls::controls.at(ctrl.first);
@@ -46,6 +44,7 @@ namespace RPICam {
             std::cout << "\t" << id->name() << " = " << value.toString()
                 << std::endl;
         }
+        **/
 
 
         /*
@@ -157,12 +156,6 @@ namespace RPICam {
         if (settings_locked) {
             ControlList &controls = request->controls();
             copy_controls(&controls, &controlList_copy, 0);
-        }
-        //TODO: for testing
-        image_count++;
-        if (image_count == 100) {
-            lock_settings();
-            std::cout << "Locked the settings";
         }
 
         camera->queueRequest(request);
@@ -469,6 +462,11 @@ namespace RPICam {
         do_save_settings = 1;
         settings_locked = 1;
 
+    }
+
+    void unlock_settings() {
+        do_save_settings = 0;
+        settings_locked = 0;
     }
 
     void save_settings();

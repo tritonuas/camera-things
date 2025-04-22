@@ -207,6 +207,7 @@ namespace Mavlink {
             if (time_to_exit) {
                 return;
             }
+            std::cout << "not found yet \n";
             usleep(500000);
         }
 
@@ -253,7 +254,7 @@ namespace Mavlink {
     void start_read_thread() {
         std::thread mavlinkReadThread(read_thread);
         mavlinkReadThread.detach();
-        std::cout << "Read thread started";
+        std::cout << "Read thread started\n";
     }
 
 

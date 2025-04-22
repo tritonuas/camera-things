@@ -14,10 +14,14 @@ int main() {
     Port *port = new Port(UART_NAME, BAUDRATE); 
     port->start();
 
-    //Mavlink::mavlink(port);
-    //Mavlink::start();
+    Mavlink::mavlink(port);
+    std::cout <<" test 1\n";
 
-    //Mavlink::send_attitude_message();
+    Mavlink::start();
+    std::cout <<" test 2\n";
+
+    Mavlink::send_attitude_message();
+    std::cout <<" test 3\n";
     //usleep(100000);
 
     functionQueue functionQ;
