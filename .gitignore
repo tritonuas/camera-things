@@ -57,3 +57,5 @@ CMakeFiles/*
 Makefile
 cmake_install.cmake
 
+# ignore vs-code
+.vscode/
