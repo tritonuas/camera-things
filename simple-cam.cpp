@@ -15,10 +15,6 @@ namespace RPICam {
      * Heavy processing should not be done in this function and instead
      * done in a different thread
      */
-    ControlList controlList_copy;
-    int image_count = 0;
-
-
 
     //if the settings are locked
     static void saveData(Request *request) {
@@ -46,7 +42,6 @@ namespace RPICam {
         }
         **/
 
-
         /*
          * Buffer info
          */
@@ -58,10 +53,10 @@ namespace RPICam {
                 send_current = 1;
                 std::cout << "发下个照片！\n";
                 send_count--;
-                Mavlink::send_both_messages();
+                //Mavlink::send_both_messages();
             }
             else {
-                //std::cout << "会跳这个照片\n";
+                std::cout << "会跳这个照片\n";
                 send_count_mutex.unlock();
                 break;
             }
@@ -119,10 +114,9 @@ namespace RPICam {
                     return;
                 }
 
-
                 if (send_current) {
 
-                    std::cout << "Get the mavlink\n";
+                    //std::cout << "Get the mavlink\n";
 
                     if (save_to_file) {
                         // Save the mapped memory to a file
@@ -135,7 +129,7 @@ namespace RPICam {
                         j++;
                     }
                     else { //send the image
-                        std::cout << "trying to send\n";
+                        std::cout << "trying to send: " << length << " bits/bytes idk";
                         OBCPort::send_image(mappedMemory, length);
                     }
                 }

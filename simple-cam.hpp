@@ -40,7 +40,7 @@ namespace RPICam {
     const static int save_to_file = 0;
     static int j;
 
-    static int settings_locked;
+    int settings_locked;
     int do_save_settings;
 
 
@@ -54,14 +54,6 @@ namespace RPICam {
     static std::shared_ptr<Camera> camera;
     //static void requestComplete(Request *request);
 
-    /*
-     * --------------------------------------------------------------------
-     * Handles and processes the request
-     * Heavy processing should not be done in this function and instead
-     * done in a different thread
-     */
-
-    
     static void saveData(Request *request);
 
     static void processRequest(Request *request); 
@@ -84,6 +76,9 @@ namespace RPICam {
     
     void copy_controls(libcamera::ControlList *list_out,
             libcamera::ControlList *list_in, int all);
+
+    ControlList controlList_copy;
+    int image_count = 0;
 
 };
 #endif

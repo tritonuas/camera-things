@@ -24,9 +24,6 @@ namespace Mavlink {
         port = port_; // port management object
     }
 
-    //~Mavlink();
-    //
-    //
 
        void handle_heartbeat(); 
 
