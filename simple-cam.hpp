@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
-#include <sys/mman.h> // For mmap
+#include <sys/mman.h>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -35,17 +35,25 @@ namespace RPICam {
     static std::mutex mutex;
     static int send_count;
     static std::mutex send_count_mutex;
-    static int send_current;
+    static int send_current = 0;
 
     const static int save_to_file = 0;
-    static int j;
+    static int image_counter = 0;
+
+    static int debug = 0;
 
     int settings_locked;
-    int do_save_settings;
+    int save_settings;
+
+    //Config stuff
+    int print_metadata = 0;
+    int mavlink_enabled = 0;
+    int send_to_obc = 0;
+    
 
 
     //camera fucked idk
-    unsigned int invalid_controls[] = {0x18, 0x1a};
+    const unsigned int invalid_controls[] = {0x18, 0x1a};
 
 
     functionQueue funQ;

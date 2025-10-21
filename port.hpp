@@ -1,5 +1,5 @@
-#ifndef UDP_PORT_H_
-#define UDP_PORT_H_
+#ifndef UART_PORT_H_
+#define UART_PORT_H_
 
 #include <cstdlib>
 #include <stdio.h>
@@ -385,4 +385,4 @@ class Port {
         }
 };
 
-#endif // UDP_PORT_H_
+#endif // UART_PORT_H_

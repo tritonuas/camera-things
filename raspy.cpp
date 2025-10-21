@@ -6,23 +6,37 @@
 
 #define UART_NAME "/dev/serial0"
 #define BAUDRATE 57600
+#define DEBUG_MODE 0
+#define SEND_TO_OBC 1
+#define MAVLINK_ENABLED 0
+
+//TODO: make a sanity check of sorts to make sure all the components work before fully starting
+
+/*
+ * Main executable for camera code
+ */
 int main() {
+
+    
+    /*
+     * Sets the config stuff
+     */
+    RPICam::debug = DEBUG_MODE;
+    RPICam::send_to_obc = SEND_TO_OBC;
+    RPICam::mavlink_enabled = MAVLINK_ENABLED;
 
 
     OBCPort::start_camera_thread();
 
-    Port *port = new Port(UART_NAME, BAUDRATE); 
-    port->start();
 
-    //Mavlink::mavlink(port);
-    std::cout <<" test 1\n";
+    if (RPICam::mavlink_enabled) {
+        Port *port = new Port(UART_NAME, BAUDRATE); 
+        port->start();
 
-    //Mavlink::start();
-    std::cout <<" test 2\n";
+        Mavlink::mavlink(port);
+        Mavlink::start();
+    }
 
-    //Mavlink::send_attitude_message();
-    std::cout <<" test 3\n";
-    //usleep(100000);
 
     functionQueue functionQ;
 

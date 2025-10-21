@@ -1,6 +1,10 @@
 #include "mavlink.hpp"
-
-
+/*
+ * Mavlink code for talking to the pixhawk
+ * TODO: maybe use the same code for talking to the gimbal board (if that is even nessicary)
+ * 
+ *
+ */
 
 namespace Mavlink {
 
@@ -13,7 +17,6 @@ namespace Mavlink {
         control_status = 0;      // whether the autopilot is in offboard control mode
         time_to_exit   = false;  // flag to signal thread exit
 
-
         system_id    = 0; // system id
         autopilot_id = 0; // autopilot component id
         companion_id = 0; // companion computer component id
@@ -24,63 +27,58 @@ namespace Mavlink {
         port = port_; // port management object
     }
 
+    void handle_heartbeat(); 
 
-       void handle_heartbeat(); 
+    mavlink_global_position_int_t handle_gps(mavlink_message_t* msg) {
+        mavlink_global_position_int_t gps;
 
-       mavlink_global_position_int_t handle_gps(mavlink_message_t* msg) {
-           mavlink_global_position_int_t gps;
+        mavlink_msg_global_position_int_decode(msg, &gps);
+        return gps;
+    }
 
-           mavlink_msg_global_position_int_decode(msg, &gps);
-           return gps;
+    mavlink_attitude_t handle_attitude_message(mavlink_message_t* msg) {
+        mavlink_attitude_t attitude;
 
-       }
+        mavlink_msg_attitude_decode(msg, &attitude);
+        return attitude;
+    }
 
-       mavlink_attitude_t handle_attitude_message(mavlink_message_t* msg) {
-           mavlink_attitude_t attitude;
+    void send_mavlink_message(mavlink_message_t msg) {
+        //uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
 
-           mavlink_msg_attitude_decode(msg, &attitude);
+        void *buffer = mmap(NULL, MAVLINK_MAX_PACKET_LEN,
+                PROT_READ | PROT_WRITE,
+                MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
-           return attitude;
-       }
+        mavlink_msg_to_send_buffer(reinterpret_cast<uint8_t*>(buffer), &msg);
 
-       void send_mavlink_message(mavlink_message_t msg) {
-           //uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-
-           void *buffer = mmap(NULL, MAVLINK_MAX_PACKET_LEN,
-                   PROT_READ | PROT_WRITE,
-                   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-
-           mavlink_msg_to_send_buffer(reinterpret_cast<uint8_t*>(buffer), &msg);
-
-           funQ.push_front_function(OBCPort::send_image,
-                   buffer, MAVLINK_MAX_PACKET_LEN);
-       }
+        funQ.push_front_function(OBCPort::send_image,
+                buffer, MAVLINK_MAX_PACKET_LEN);
+    }
 
 
-       void print_gps(mavlink_global_position_int_t* msg) {
-           std::cout << msg->time_boot_ms << "\n";
-           std::cout << msg->lat << "\n";
-           std::cout << msg->lon << "\n";
-           std::cout << msg->alt << "\n";
-           std::cout << msg->relative_alt << "\n";
-           std::cout << msg->vx << "\n";
-           std::cout << msg->vy << "\n";
-           std::cout << msg->vz << "\n";
-           std::cout << msg->hdg << "\n";
-       }
+    void print_gps(mavlink_global_position_int_t* msg) {
+        std::cout << msg->time_boot_ms << "\n";
+        std::cout << msg->lat << "\n";
+        std::cout << msg->lon << "\n";
+        std::cout << msg->alt << "\n";
+        std::cout << msg->relative_alt << "\n";
+        std::cout << msg->vx << "\n";
+        std::cout << msg->vy << "\n";
+        std::cout << msg->vz << "\n";
+        std::cout << msg->hdg << "\n";
+    }
 
 
-       void print_attitude(mavlink_attitude_t *msg) {
-           std::cout << msg->time_boot_ms << "\n";
-           std::cout << msg->roll << "\n";
-           std::cout << msg->pitch << "\n";
-           std::cout << msg->yaw << "\n";
-           std::cout << msg->rollspeed << "\n";
-           std::cout << msg->pitchspeed << "\n";
-           std::cout << msg->yawspeed << "\n";
-       }
-
-
+    void print_attitude(mavlink_attitude_t *msg) {
+        std::cout << msg->time_boot_ms << "\n";
+        std::cout << msg->roll << "\n";
+        std::cout << msg->pitch << "\n";
+        std::cout << msg->yaw << "\n";
+        std::cout << msg->rollspeed << "\n";
+        std::cout << msg->pitchspeed << "\n";
+        std::cout << msg->yawspeed << "\n";
+    }
 
     void read_message() {
 
@@ -121,7 +119,7 @@ namespace Mavlink {
                             //temp_msg = handle_attitude_message(&message);
                             //print_attitude(&temp_msg);
                             send_mavlink_message(message);
-                            
+
                             break;
                         }
                     default:
