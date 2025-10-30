@@ -7,7 +7,7 @@
 #define UART_NAME "/dev/serial0"
 #define BAUDRATE 57600
 #define DEBUG_MODE 0
-#define SEND_TO_OBC 1
+#define SEND_TO_OBC 0
 #define MAVLINK_ENABLED 0
 
 //TODO: make a sanity check of sorts to make sure all the components work before fully starting
