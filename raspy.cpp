@@ -6,7 +6,7 @@
 
 #define UART_NAME "/dev/serial0"
 #define BAUDRATE 57600
-#define DEBUG_MODE 0
+#define DEBUG_MODE 1
 #define SEND_TO_OBC 0
 #define MAVLINK_ENABLED 0
 

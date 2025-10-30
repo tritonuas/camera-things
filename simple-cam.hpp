@@ -37,7 +37,7 @@ namespace RPICam {
     static std::mutex send_count_mutex;
     static int send_current = 0;
 
-    const static int save_to_file = 0;
+    const static int save_to_file = 1;
     static int image_counter = 0;
 
     static int debug = 0;

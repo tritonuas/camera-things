@@ -42,7 +42,7 @@ namespace RPICam {
         /*
          * Prints all the metadata of the image, if enabled
          */
-        if (print_metadata) {
+        if (print_metadata || 1) {
             const ControlList &requestMetadata = request->metadata();
             for (const auto &ctrl : requestMetadata) {
                 const ControlId *id = controls::controls.at(ctrl.first);
@@ -85,7 +85,7 @@ namespace RPICam {
             /*
              * prints the metadata, if enabled
              */
-            if (debug) {
+            if (debug || 1) {
                 const FrameMetadata &metadata = buffer->metadata();
                 std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
                     << " timestamp: " << metadata.timestamp
@@ -133,7 +133,9 @@ namespace RPICam {
                     return;
                 }
 
-                if (send_current) {
+		std::cout << "check save" << std::endl;
+
+                if (send_current || save_to_file) {
                     if (save_to_file) {
                         // Save the mapped memory to a file
                         std::ofstream file("out/output_plane" + std::to_string(image_counter) + ".raw", std::ios::binary);
@@ -295,7 +297,7 @@ void start() {
      * TODO: make it work with global shutter camera
      */
     StreamConfiguration &streamConfig = config->at(0);
-    streamConfig.size = { 2028, 1520 };
+    streamConfig.size = { 1456, 1088 };
     std::cout << "Default Raw configuration is: "
         << streamConfig.toString() << std::endl;
     streamConfig.bufferCount = BUFFER_COUNT;
