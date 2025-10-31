@@ -1,4 +1,5 @@
 #include "simple-cam.hpp"
+#include <unistd.h>
 
 using namespace libcamera;
 
@@ -116,31 +117,46 @@ namespace RPICam {
              * sent/saved 
              */
             for (size_t i = 0; i < buffer->planes().size(); ++i) {
-                const FrameBuffer::Plane &plane = buffer->planes()[i];
-                int fd = plane.fd.get();   // File descriptor for the plane
-                size_t length = plane.length; // Length of the plane data
-                off_t offset = plane.offset;  // Offset within the file descriptor
+            const FrameBuffer::Plane &plane = buffer->planes()[i];
+                
+                // Get plane data
+                int fd = plane.fd.get();
+                size_t length = plane.length;
+                off_t offset = plane.offset;
 
-                // Map the plane memory
+                // --- Page-Alignment Fix ---
+                // We must mmap at a page-aligned offset
+                long page_size = sysconf(_SC_PAGE_SIZE);
+                off_t mmap_offset = (offset / page_size) * page_size;
+                size_t mmap_length = length + (offset - mmap_offset);
+                
+                // Map the memory
                 void *mappedMemory = mmap(nullptr,
-                        length,
-                        PROT_READ | PROT_WRITE,
-                        MAP_SHARED,
-                        fd, offset);
+                                          mmap_length,  // Use new calculated length
+                                          PROT_READ,    // Read-only
+                                          MAP_SHARED,
+                                          fd,
+                                          mmap_offset); // Use new calculated offset
+                
                 if (mappedMemory == MAP_FAILED) {
                     perror("mmap failed");
-                    mutex.unlock();
-                    return;
+                    // DO NOT RETURN. Just stop processing planes for this buffer.
+                    // The request will still be re-queued later.
+                    break; 
                 }
 
-		std::cout << "check save" << std::endl;
+                // Get the pointer to the *actual* data start
+                unsigned char *data = static_cast<unsigned char *>(mappedMemory) + (offset - mmap_offset);
+
+                std::cout << "check save" << std::endl;
 
                 if (send_current || save_to_file) {
                     if (save_to_file) {
-                        // Save the mapped memory to a file
+                        // ... (your file saving logic)
+                        // Note: use 'data' and 'length' here, not 'mappedMemory' or 'mmap_length'
                         std::ofstream file("out/output_plane" + std::to_string(image_counter) + ".raw", std::ios::binary);
-                        file.write(static_cast<char *>(mappedMemory), length);
-                        file.close();
+                        file.write(reinterpret_cast<const char *>(data), length);
+			file.close();
 
                         if (debug) {
                             std::cout << "Plane " << image_counter << " saved to output_plane" 
@@ -152,12 +168,14 @@ namespace RPICam {
                         if (debug) {
                             std::cout << "trying to send: " << length << " bits/bytes idk";
                         }
-                        OBCPort::send_image(mappedMemory, length);
+                        // Note: use 'data' and 'length' here
+                        OBCPort::send_image(data, length);
                     }
                 }
 
-                munmap(mappedMemory, length);
-            }
+                // Unmap using the original mapped address and mmap_length
+                munmap(mappedMemory, mmap_length);
+	    }
             send_current = 0;
     }
 
