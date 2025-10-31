@@ -2,8 +2,6 @@
 
 using namespace libcamera;
 
-
-
 namespace RPICam {
 
 
@@ -290,7 +288,7 @@ void start() {
      * Config the camera
      */
     std::unique_ptr<CameraConfiguration> config =
-        camera->generateConfiguration( { StreamRole::Raw } );
+        camera->generateConfiguration( { StreamRole::Viewfinder } );
 
     /*
      * Config the stream
@@ -302,7 +300,8 @@ void start() {
         << streamConfig.toString() << std::endl;
     streamConfig.bufferCount = BUFFER_COUNT;
 
-    streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("YUV420");
+    //streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("YUV420");
+    streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("RGB888");
 
     std::cout << "pixelFormat" << streamConfig.pixelFormat.toString();
 
