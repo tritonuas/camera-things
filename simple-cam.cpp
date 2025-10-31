@@ -63,17 +63,19 @@ namespace RPICam {
              * also will send GPS+attitude data if requested
              */
             send_count_mutex.lock();
-            if (send_count >= 1) {
-                send_current = 1;
-                send_count--;
-                if (mavlink_enabled) {
-                    Mavlink::send_both_messages();
-                }
-            }
-            else {
-                send_count_mutex.unlock();
-                break;
-            }
+	    if (! save_to_file) {
+		    if (send_count >= 1) {
+			send_current = 1;
+			send_count--;
+			if (mavlink_enabled) {
+			    Mavlink::send_both_messages();
+			}
+		    }
+		    else {
+			send_count_mutex.unlock();
+			break;
+		    }
+	    }
             send_count_mutex.unlock();
 
 
@@ -300,8 +302,8 @@ void start() {
         << streamConfig.toString() << std::endl;
     streamConfig.bufferCount = BUFFER_COUNT;
 
-    //streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("YUV420");
-    streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("RGB888");
+    streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("YUV420");
+    //streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("RGB888");
 
     std::cout << "pixelFormat" << streamConfig.pixelFormat.toString();
 
