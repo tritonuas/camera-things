@@ -24,7 +24,7 @@ namespace RPICam {
      * Save image metadata (TODO)
      * Print image petadata
      */
-    static void saveData(Request *request) {
+    void saveData(Request *request) {
 
         //TODO: determine if this mutex is no longer needed
         mutex.lock();
@@ -201,7 +201,7 @@ namespace RPICam {
     /*
      * Enqueues the fucntion into the sending queue
      */
-    static void processRequest(Request *request) {
+    void processRequest(Request *request) {
         if (debug) {
             std::cout << std::endl
                 << "Request completed: " << request->toString() << std::endl;
@@ -222,7 +222,7 @@ namespace RPICam {
      *
      * So if someone smarter than me wants to fix this bit, then fix it.
      */
-    static void requestComplete(Request *request) {
+    void requestComplete(Request *request) {
         if (request->status() == Request::RequestCancelled) {
             return;
         }
