@@ -1,3 +1,0 @@
-/home/tuas/camera-things/CMakeFiles/raspy.dir
-/home/tuas/camera-things/CMakeFiles/edit_cache.dir
-/home/tuas/camera-things/CMakeFiles/rebuild_cache.dir
