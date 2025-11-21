@@ -56,7 +56,7 @@ void load_configuration(const std::string& filename) {
  */
 int main() {
 
-    load_configuration("/config/picam.json");
+    load_configuration("../config/picam.json");
     /*
      * Set the config 
      */
