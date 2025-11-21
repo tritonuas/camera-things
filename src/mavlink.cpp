@@ -11,6 +11,10 @@
 
 namespace Mavlink {
 
+    #ifndef MAV_COMP_ID_PI
+    #define MAV_COMP_ID_PI 191
+    #endif
+
     void mavlink(Port *port_) {
         // initialize attributes
         write_count = 0;
@@ -22,7 +26,7 @@ namespace Mavlink {
 
         system_id    = 0; // system id
         autopilot_id = 0; // autopilot component id
-        companion_id = 0; // companion computer component id
+        companion_id = MAV_COMP_ID_PI; // companion computer component id
 
         current_messages.sysid  = system_id;
         current_messages.compid = autopilot_id;

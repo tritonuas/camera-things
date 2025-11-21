@@ -68,9 +68,6 @@ namespace RPICam {
                 if (send_count >= 1) {
                     send_current = 1;
                     send_count--;
-                    if (mavlink_enabled) {
-                        Mavlink::send_both_messages();
-                    }
                 }
                 else {
                     send_count_mutex.unlock();
@@ -79,6 +76,9 @@ namespace RPICam {
             }
             send_count_mutex.unlock();
 
+            if (mavlink_enabled) {
+                Mavlink::send_both_messages();
+            }
 
             // (Unused) Stream *stream = bufferPair.first;
             FrameBuffer *buffer = bufferPair.second;

@@ -30,7 +30,7 @@ void load_configuration(const std::string& filename) {
     try {
         json data = json::parse(file);
 
-        UART_NAME = data.value("UART_NAME", "/dev/serial0");
+        UART_NAME = data.value("UART_NAME", "dev/serial0");
         BAUDRATE = data.value("BAUDRATE", 57600);
         DEBUG_MODE = data.value("DEBUG_MODE", 1);
         SEND_TO_OBC = data.value("SEND_TO_OBC", 0);
