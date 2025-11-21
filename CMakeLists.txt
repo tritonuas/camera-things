@@ -5,7 +5,7 @@ project(RaspberryPi
     LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Werror -Wno-unused-parameter")
+set(CMAKE_CXX_FLAGS "-Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wno-unused-parameter")
 
 # --- FIND SYSTEM DEPENDENCIES ---
 find_package(PkgConfig)

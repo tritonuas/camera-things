@@ -1,5 +1,6 @@
 // obc_port.cpp
 #include "obc_port.hpp"
+#include "simple-cam.hpp"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

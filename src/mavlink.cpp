@@ -1,4 +1,7 @@
 #include "mavlink.hpp"
+#include "obc_port.hpp"
+#include <sys/mman.h>
+
 /*
  * Mavlink code for talking to the pixhawk
  * TODO: maybe use the same code for talking to the gimbal board (if that is even nessicary)
