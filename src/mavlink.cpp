@@ -50,9 +50,10 @@ namespace Mavlink {
         return attitude;
     }
 
-    void send_mavlink_message(mavlink_message_t msg) {
+    void process_mavlink_message(mavlink_message_t msg) {
         //uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
 
+	if (RPICam::send_to_obc) {
         void *buffer = mmap(NULL, MAVLINK_MAX_PACKET_LEN,
                 PROT_READ | PROT_WRITE,
                 MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
@@ -61,6 +62,11 @@ namespace Mavlink {
 
         funQ.push_front_function(OBCPort::send_image,
                 buffer, MAVLINK_MAX_PACKET_LEN);
+	}
+
+	else{
+		std::cout << "test";
+	}
     }
 
 
@@ -116,7 +122,7 @@ namespace Mavlink {
                     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
                         {
                             printf("received gps message\n");
-                            send_mavlink_message(message);
+                            process_mavlink_message(message);
                             break;
                         }
                     case MAVLINK_MSG_ID_ATTITUDE:
@@ -125,7 +131,7 @@ namespace Mavlink {
                             //mavlink_attitude_t temp_msg;
                             //temp_msg = handle_attitude_message(&message);
                             //print_attitude(&temp_msg);
-                            send_mavlink_message(message);
+                            process_mavlink_message(message);
 
                             break;
                         }
@@ -245,7 +251,7 @@ namespace Mavlink {
         while ( ! time_to_exit )
         {
             read_message();
-            usleep(100000); // Read batches at 10Hz
+            usleep(1000);
         }
 
         reading_status = false;
@@ -258,6 +264,5 @@ namespace Mavlink {
         mavlinkReadThread.detach();
         std::cout << "Read thread started\n";
     }
-
 
 }
