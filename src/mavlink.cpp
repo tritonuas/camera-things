@@ -1,5 +1,6 @@
 #include "mavlink.hpp"
 #include "obc_port.hpp"
+#include "simple-cam.hpp"
 #include <sys/mman.h>
 
 /*

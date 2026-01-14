@@ -16,7 +16,7 @@
 #include <cstring>
 
 inline const size_t CHUNK_SIZE = 512;
-inline const char* SERVER_IP = "192.168.68.2"; 
+inline const char* SERVER_IP = "192.168.77.2"; 
 inline const int SERVER_PORT = 25565;
 inline const size_t SHM_SIZE = 1024 * 1024; 
 
