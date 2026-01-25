@@ -64,15 +64,13 @@ namespace RPICam {
              * also will send GPS+attitude data if requested
              */
             send_count_mutex.lock();
-            if (! save_to_file) {
-                if (send_count >= 1) {
-                    send_current = 1;
-                    send_count--;
-                }
-                else {
-                    send_count_mutex.unlock();
-                    break;
-                }
+            // If we have a pending request, mark send_current as true
+            if (send_count >= 1) {
+                send_current = 1;
+                // Decrement count only once per frame 
+
+                // Ideally, we check if this is plane 0 before decrementing, or decrement outside loop since its buggy af 
+                send_count--; 
             }
             send_count_mutex.unlock();
 
@@ -159,11 +157,10 @@ namespace RPICam {
                             image_counter++;
                         }
                     }
-                    if (send_to_obc) {
+                    if (send_to_obc && send_current) { 
                         if (debug) {
                             LOG_F(1, "Sending to OBC: %lu bytes", length);
                         }
-                        // Note: use 'data' and 'length' here
                         OBCPort::send_image(data, length);
                     }
                 }
