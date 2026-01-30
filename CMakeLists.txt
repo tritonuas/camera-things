@@ -32,6 +32,7 @@ add_executable(raspy
     src/mavlink.cpp
     src/obc_port.cpp
     src/helpers.cpp
+    libs/loguru/loguru.cpp
     # src/udp_client.cpp   <-- Uncomment if you use this
 )
 
@@ -41,4 +42,5 @@ target_link_libraries(raspy
     PkgConfig::LIBCAMERA
     ${LIBUSB_LINK_LIBRARIES}
     pthread
+    dl
 )
