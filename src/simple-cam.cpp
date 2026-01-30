@@ -1,5 +1,6 @@
 #include "simple-cam.hpp"
 #include <unistd.h>
+#include "loguru.hpp"
 
 using namespace libcamera;
 
@@ -46,8 +47,7 @@ namespace RPICam {
             for (const auto &ctrl : requestMetadata) {
                 const ControlId *id = controls::controls.at(ctrl.first);
                 const ControlValue &value = ctrl.second;
-                std::cout << "\t" << id->name() << " = " << value.toString()
-                    << std::endl;
+                LOG_F(INFO, "\t%s = %s", id->name().c_str(), value.toString().c_str());
             }
         }
 
@@ -88,23 +88,20 @@ namespace RPICam {
              */
             if (debug) {
                 const FrameMetadata &metadata = buffer->metadata();
-                std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence
-                    << " timestamp: " << metadata.timestamp
-                    << " bytesused: " << "\n";
+                LOG_F(INFO, " seq: %06d timestamp: %lu bytesused: ", metadata.sequence, metadata.timestamp);
                 unsigned int nplane = 0;
                 for (const FrameMetadata::Plane &plane : metadata.planes()) {
-                    std::cout << plane.bytesused;
+                    LOG_F(INFO, "%d", plane.bytesused);
                     if (++nplane < metadata.planes().size()) {
-                        std::cout << "/";
+                        LOG_F(INFO, "/");
                     }
                 }
 
-                std::cout << "Buffer planes: " << buffer->planes().size() << std::endl;
+                LOG_F(INFO, "Buffer planes: %lu", buffer->planes().size());
                 for (size_t i = 0; i < buffer->planes().size(); ++i) {
                     const FrameBuffer::Plane &plane = buffer->planes()[i];
-                    std::cout << "Plane " << i << ": fd=" << plane.fd.get()
-                        << ", length=" << plane.length
-                        << ", offset=" << plane.offset << std::endl;
+                    LOG_F(INFO, "Plane %lu: fd=%d, length=%u, offset=%u", 
+                        i, plane.fd.get(), plane.length, plane.offset);
                 }
             }
 
@@ -139,7 +136,7 @@ namespace RPICam {
                         mmap_offset); // Use new calculated offset
 
                 if (mappedMemory == MAP_FAILED) {
-                    perror("mmap failed");
+                    LOG_F(ERROR, "mmap failed: %s", strerror(errno));
                     // DO NOT RETURN. Just stop processing planes for this buffer.
                     // The request will still be re-queued later.
                     break; 
@@ -148,7 +145,6 @@ namespace RPICam {
                 // Get the pointer to the *actual* data start
                 unsigned char *data = static_cast<unsigned char *>(mappedMemory) + (offset - mmap_offset);
 
-                std::cout << "check save" << std::endl;
 
                 if (send_current || save_to_file) {
                     if (save_to_file) {
@@ -159,14 +155,13 @@ namespace RPICam {
                         file.close();
 
                         if (debug) {
-                            std::cout << "Plane " << image_counter << " saved to output_plane" 
-                                << image_counter << ".raw" << std::endl;
+                            LOG_F(INFO, "Saved: output_plane%d.raw", image_counter);
                             image_counter++;
                         }
                     }
                     if (send_to_obc) {
                         if (debug) {
-                            std::cout << "trying to send: " << length << " bits/bytes idk";
+                            LOG_F(1, "Sending to OBC: %lu bytes", length);
                         }
                         // Note: use 'data' and 'length' here
                         OBCPort::send_image(data, length);
@@ -180,7 +175,7 @@ namespace RPICam {
         }
 
         if (debug) {
-            std::cout << "Finished Processing Request: " << request->toString() << std::endl;
+            LOG_F(INFO, "Request Finished: %s", request->toString().c_str());
         }
 
         /* Re-queue the Request to the camera. */
@@ -203,8 +198,7 @@ namespace RPICam {
      */
     void processRequest(Request *request) {
         if (debug) {
-            std::cout << std::endl
-                << "Request completed: " << request->toString() << std::endl;
+            LOG_F(INFO, "Request Queued: %s", request->toString().c_str());
         }
 
         funQ.push_back_function(saveData, request);
@@ -287,14 +281,13 @@ namespace RPICam {
          * system, and list them.
          */
         for (auto const &camera : cm->cameras())
-            std::cout << " - " << cameraName(camera.get()) << std::endl;
+            LOG_F(INFO, " - %s", cameraName(camera.get()).c_str());
 
         /*
          * Get the camera thing
          */
         if (cm->cameras().empty()) {
-            std::cout << "No cameras were identified on the system."
-                << std::endl;
+            LOG_F(INFO, "No cameras were identified on the system.");
             cm->stop();
             return;
         }
@@ -316,14 +309,13 @@ namespace RPICam {
          */
         StreamConfiguration &streamConfig = config->at(0);
         streamConfig.size = { 1456, 1088 };
-        std::cout << "Default Raw configuration is: "
-            << streamConfig.toString() << std::endl;
+        LOG_F(INFO, "Default Raw configuration is: %s", streamConfig.toString().c_str());
         streamConfig.bufferCount = BUFFER_COUNT;
 
         streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("YUV420");
         //streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("RGB888");
 
-        std::cout << "pixelFormat" << streamConfig.pixelFormat.toString();
+        LOG_F(INFO, "pixelFormat: %s", streamConfig.pixelFormat.toString().c_str());
 
 
         //SensorConfiguration sensorConfig;
@@ -351,8 +343,7 @@ namespace RPICam {
          * requested.
          */
         config->validate();
-        std::cout << "Validated viewfinder configuration is: "
-            << streamConfig.toString() << std::endl;
+        LOG_F(INFO, "Validated viewfinder configuration is: %s", streamConfig.toString().c_str());
 
         /*
          * Once we have a validated configuration, we can apply it to the
@@ -386,13 +377,13 @@ namespace RPICam {
         for (StreamConfiguration &cfg : *config) {
             int ret = allocator->allocate(cfg.stream());
             if (ret < 0) {
-                std::cerr << "Can't allocate buffers" << std::endl;
+                LOG_F(ERROR, "Can't allocate buffers");
                 return;
                 //return EXIT_FAILURE;
             }
 
             size_t allocated = allocator->buffers(cfg.stream()).size();
-            std::cout << "Allocated " << allocated << " buffers for stream" << std::endl;
+            LOG_F(INFO, "Allocated %lu buffers for stream", allocated);
         }
 
         /*
@@ -427,7 +418,7 @@ namespace RPICam {
             std::unique_ptr<Request> request = camera->createRequest();
             if (!request)
             {
-                std::cerr << "Can't create request" << std::endl;
+                LOG_F(ERROR, "Can't create request");
                 return;
 
             }
@@ -436,8 +427,7 @@ namespace RPICam {
             int ret = request->addBuffer(stream, buffer.get());
             if (ret < 0)
             {
-                std::cerr << "Can't set buffer for request"
-                    << std::endl;
+                LOG_F(ERROR, "Can't set buffer for request");
                 return;
             }
 
@@ -477,9 +467,7 @@ namespace RPICam {
          */
         camera->start();
         for (std::unique_ptr<Request> &request : requests) {
-
-            std::cout << std::endl
-                << "Added Request: " << request->toString() << std::endl;
+            LOG_F(INFO, "Added Request: %s", request->toString().c_str());
             camera->queueRequest(request.get());
         }
 
@@ -552,8 +540,7 @@ namespace RPICam {
                 }
                 skip = 0;
                 if (print_metadata) {
-                    std::cout << "COPYING: \t\t\t" << id->name() 
-                        << "ID: " << id->id() << " = " << value.toString() << std::endl;
+                    LOG_F(INFO, "COPYING: \t\t\t%s ID: %d = %s", id->name().c_str(), id->id(), value.toString().c_str());
                 }
             }
         }

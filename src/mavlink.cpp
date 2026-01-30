@@ -1,4 +1,5 @@
 #include "mavlink.hpp"
+#include "loguru.hpp"
 #include "obc_port.hpp"
 #include "simple-cam.hpp"
 #include <sys/mman.h>
@@ -66,32 +67,22 @@ namespace Mavlink {
 	}
 
 	else{
-		std::cout << "test";
+		LOG_F(DEBUG, "Mavlink: Sending to OBC disabled (Local)");
 	}
     }
 
 
     void print_gps(mavlink_global_position_int_t* msg) {
-        std::cout << msg->time_boot_ms << "\n";
-        std::cout << msg->lat << "\n";
-        std::cout << msg->lon << "\n";
-        std::cout << msg->alt << "\n";
-        std::cout << msg->relative_alt << "\n";
-        std::cout << msg->vx << "\n";
-        std::cout << msg->vy << "\n";
-        std::cout << msg->vz << "\n";
-        std::cout << msg->hdg << "\n";
+        LOG_F(INFO, "GPS: time_boot_ms=%u lat=%d lon=%d alt=%d relative_alt=%d vx=%d vy=%d vz=%d hdg=%u",
+            msg->time_boot_ms, msg->lat, msg->lon, msg->alt, msg->relative_alt, 
+            msg->vx, msg->vy, msg->vz, msg->hdg);
     }
 
 
     void print_attitude(mavlink_attitude_t *msg) {
-        std::cout << msg->time_boot_ms << "\n";
-        std::cout << msg->roll << "\n";
-        std::cout << msg->pitch << "\n";
-        std::cout << msg->yaw << "\n";
-        std::cout << msg->rollspeed << "\n";
-        std::cout << msg->pitchspeed << "\n";
-        std::cout << msg->yawspeed << "\n";
+        LOG_F(INFO, "Attitude: time_boot_ms=%u roll=%f pitch=%f yaw=%f rollspeed=%f pitchspeed=%f yawspeed=%f",
+            msg->time_boot_ms, msg->roll, msg->pitch, msg->yaw, 
+            msg->rollspeed, msg->pitchspeed, msg->yawspeed);
     }
 
     void read_message() {
@@ -122,13 +113,13 @@ namespace Mavlink {
                         }
                     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
                         {
-                            printf("received gps message\n");
+                            LOG_F(1, "Mavlink: Received GPS");
                             process_mavlink_message(message);
                             break;
                         }
                     case MAVLINK_MSG_ID_ATTITUDE:
                         {
-                            printf("received attitude message\n");
+                            LOG_F(1, "Mavlink: Received Attitude");
                             //mavlink_attitude_t temp_msg;
                             //temp_msg = handle_attitude_message(&message);
                             //print_attitude(&temp_msg);
@@ -202,13 +193,13 @@ namespace Mavlink {
         //check port
 
         if (!port->is_running()) {
-            printf("Port not open\n");
+            LOG_F(ERROR, "Mavlink: Port not open");
             throw 1;
         }
 
         //read thread
 
-        printf("Start read thread\n");
+        LOG_F(INFO, "Mavlink: Read thread starting");
         start_read_thread();
 
 
@@ -216,11 +207,11 @@ namespace Mavlink {
             if (time_to_exit) {
                 return;
             }
-            std::cout << "not found yet \n";
+            LOG_F(WARNING, "Mavlink: Waiting for connection...");
             usleep(500000);
         }
 
-        printf("Found\n");
+        LOG_F(INFO, "Mavlink: Connected");
 
 
         // TODO: the actual system will have multiple thing sysid,
@@ -229,15 +220,14 @@ namespace Mavlink {
         if ( not system_id )
         {
             system_id = current_messages.sysid;
-            printf("GOT VEHICLE SYSTEM ID: %i\n", system_id );
+            LOG_F(INFO, "Mavlink: System ID: %d", system_id);
         }
 
         // Component ID
         if ( not autopilot_id )
         {
             autopilot_id = current_messages.compid;
-            printf("GOT AUTOPILOT COMPONENT ID: %i\n", autopilot_id);
-            printf("\n");
+            LOG_F(INFO, "Mavlink: Autopilot ID: %d", autopilot_id);
         }
     }
 
@@ -263,7 +253,7 @@ namespace Mavlink {
     void start_read_thread() {
         std::thread mavlinkReadThread(read_thread);
         mavlinkReadThread.detach();
-        std::cout << "Read thread started\n";
+        LOG_F(INFO, "Mavlink: Read thread started");
     }
 
 }

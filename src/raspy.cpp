@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "loguru.hpp"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -21,11 +22,11 @@ void load_configuration(const std::string& filename) {
     std::ifstream file(filename);
     
     if (!file.is_open()) {
-        std::cerr << "[CONFIG] Warning: Could not open " << filename << ". Using default settings.\n";
+        LOG_F(WARNING, "Could not open %s. Using default settings.", filename.c_str());
         return;
     }
 
-    std::cout << "[CONFIG] Loading settings from " << filename << "...\n";
+    LOG_F(INFO, "Loading settings from %s...", filename.c_str());
 
     try {
         json data = json::parse(file);
@@ -37,15 +38,15 @@ void load_configuration(const std::string& filename) {
         MAVLINK_ENABLED = data.value("MAVLINK_ENABLED", 0);
 
         // Print out configs for sanity check
-        std::cout << "  UART_NAME: " << UART_NAME << "\n";
-        std::cout << "  BAUDRATE: " << BAUDRATE << "\n";
-        std::cout << "  DEBUG_MODE: " << DEBUG_MODE << "\n";
-        std::cout << "  SEND_TO_OBC: " << SEND_TO_OBC << "\n";
-        std::cout << "  MAVLINK_ENABLED: " << MAVLINK_ENABLED << "\n";
+        LOG_F(INFO, "  UART_NAME: %s", UART_NAME.c_str());
+        LOG_F(INFO, "  BAUDRATE: %d", BAUDRATE);
+        LOG_F(INFO, "  DEBUG_MODE: %d", DEBUG_MODE);
+        LOG_F(INFO, "  SEND_TO_OBC: %d", SEND_TO_OBC);
+        LOG_F(INFO, "  MAVLINK_ENABLED: %d", MAVLINK_ENABLED);
 
     } catch (json::parse_error& e) {
-        std::cerr << "[CONFIG] JSON Parse Error: " << e.what() << "\n";
-        std::cerr << "[CONFIG] Falling back to defaults.\n";
+        LOG_F(ERROR, "JSON Parse Error: %s", e.what());
+        LOG_F(ERROR, "Falling back to defaults.");
     }
 }
 
@@ -54,7 +55,10 @@ void load_configuration(const std::string& filename) {
 /*
  * Main executable for camera code
  */
-int main() {
+int main(int argc, char* argv[]) {
+    loguru::init(argc, argv);
+    loguru::add_file("everything.log", loguru::Append, loguru::Verbosity_MAX);
+    LOG_F(INFO, "Starting Camera Application");
 
     load_configuration("../config/picam.json");
     /*
@@ -83,7 +87,7 @@ int main() {
     functionQ.startSendingLoop();
 
     OBCPort::start_listener();
-    std::cout << "started listening";
+    LOG_F(INFO, "Started listening to OBC port");
 
     //TODO: Port thing is a memory leak
     
