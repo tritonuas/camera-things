@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 
 project(RaspberryPi
-    DESCRIPTION "A modular camera application for TritonUAS"
+    DESCRIPTION "Camera-things"
     LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -15,25 +15,24 @@ pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
 
 # --- SETUP INCLUDE DIRECTORIES ---
 include_directories(
-    ${CMAKE_SOURCE_DIR}/include         # Your headers (simple-cam.hpp, etc.)
-    ${CMAKE_SOURCE_DIR}/libs            # Library roots (for nlohmann)
-    ${CMAKE_SOURCE_DIR}/libs/mavlink    # MAVLink root headers (mavlink_types.h)
+    ${CMAKE_SOURCE_DIR}/include        
+    ${CMAKE_SOURCE_DIR}/libs            
+    ${CMAKE_SOURCE_DIR}/libs/mavlink    
     ${LIBCAMERA_INCLUDE_DIRS} 
     ${LIBEVENT_INCLUDE_DIRS} 
     ${LIBUSB_INCLUDE_DIRS}
 )
 
 # --- DEFINE THE EXECUTABLE ---
-# We list the source files from the 'src' folder
+# aka source files from src/ we wanna use
 add_executable(raspy 
     src/raspy.cpp 
     src/simple-cam.cpp 
     src/event_loop.cpp 
     src/mavlink.cpp
     src/obc_port.cpp
-    src/helpers.cpp
     libs/loguru/loguru.cpp
-    # src/udp_client.cpp   <-- Uncomment if you use this
+    # src/udp_client.cpp   # Not used rn
 )
 
 # --- LINK LIBRARIES ---
