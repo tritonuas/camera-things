@@ -21,7 +21,7 @@ jobs:
         docker run --rm --platform linux/arm64 \
         -v ${{ github.workspace }}:/workspace \
         -w /workspace \
-        dtcooper/raspberrypi-os:bookworm \ # I had to use this b/c of pi-specific dependencies 
+        dtcooper/raspberrypi-os:bookworm \
         /bin/bash -c " \
             apt-get update && \
             apt-get install -y \
