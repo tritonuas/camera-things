@@ -1,4 +1,5 @@
 # Pi Camera UDP Server | Camera-things
+![Build Camera](https://github.com/tritonuas/camera-things/actions/workflows/build.yml/badge.svg)
 
 This is a repository for a camera server that runs on a Raspberry Pi Zero 2 W and sends images to a Jetson Orin Nano via UDP.
 
