@@ -21,6 +21,7 @@ void load_configuration(const std::string& filename) {
     std::ifstream file(filename);
     
     if (!file.is_open()) {
+        // This can occur if the binary is not open from /build
         LOG_F(WARNING, "Could not open %s. Using default settings.", filename.c_str());
         return;
     }

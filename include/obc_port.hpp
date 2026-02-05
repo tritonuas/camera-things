@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <cstring>
 
+// TODO: make these config variables from JSON
 inline const size_t CHUNK_SIZE = 512;
 inline const char* SERVER_IP = "192.168.77.2"; 
 inline const int SERVER_PORT = 25565;

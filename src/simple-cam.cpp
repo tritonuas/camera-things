@@ -302,7 +302,6 @@ namespace RPICam {
 
         /*
          * Config the stream
-         * TODO: make it work with global shutter camera
          */
         StreamConfiguration &streamConfig = config->at(0);
         streamConfig.size = { 1456, 1088 };

@@ -16,7 +16,7 @@ struct Header {
     uint32_t total_chunks;
     uint32_t mem_size;
 };
-#pragma pack(pop
+#pragma pack(pop)
 
 const uint32_t EXPECTED_MAGIC = 0x12345678;
 const size_t CHUNK_SIZE = 1024;
