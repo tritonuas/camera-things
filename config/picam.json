@@ -1,0 +1,7 @@
+{
+    "UART_NAME": "/dev/serial0",
+    "BAUDRATE": 57600,
+    "DEBUG_MODE": 1,
+    "SEND_TO_OBC": 0,
+    "MAVLINK_ENABLED": 1
+}
