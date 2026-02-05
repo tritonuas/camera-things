@@ -1,7 +1,7 @@
 #include "mavlink.hpp"
-#include "loguru.hpp"
 #include "obc_port.hpp"
 #include "simple-cam.hpp"
+#include <loguru/loguru.hpp>
 #include <sys/mman.h>
 
 /*

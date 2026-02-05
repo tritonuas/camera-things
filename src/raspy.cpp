@@ -1,8 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "loguru.hpp"
-
+#include <loguru/loguru.hpp>
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 

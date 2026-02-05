@@ -335,6 +335,8 @@ namespace loguru
 		Verbosity_FATAL   = -3,
 		Verbosity_ERROR   = -2,
 		Verbosity_WARNING = -1,
+		Verbosity_TRACE    = +4;
+		Verbosity_DEBUG    = +5;
 
 		// Normal messages. By default written to stderr.
 		Verbosity_INFO    =  0,
@@ -1478,5 +1480,11 @@ LOGURU_ANONYMOUS_NAMESPACE_END
 #endif // LOGURU_REPLACE_GLOG
 
 #endif // LOGURU_WITH_STREAMS
+
+#define MAV_INFO 3
+#define MAV_WARN 2
+#define MAV_ERR  1
+#define TRACE 4
+#define DEBUG 5
 
 #endif // LOGURU_HAS_DECLARED_STREAMS_HEADER

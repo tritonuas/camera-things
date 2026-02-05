@@ -1,6 +1,6 @@
 #include "simple-cam.hpp"
 #include <unistd.h>
-#include "loguru.hpp"
+#include <loguru/loguru.hpp>
 
 using namespace libcamera;
 
