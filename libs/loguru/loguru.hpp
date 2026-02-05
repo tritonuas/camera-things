@@ -335,8 +335,8 @@ namespace loguru
 		Verbosity_FATAL   = -3,
 		Verbosity_ERROR   = -2,
 		Verbosity_WARNING = -1,
-		Verbosity_TRACE    = +4;
-		Verbosity_DEBUG    = +5;
+		Verbosity_TRACE    = +4,
+		Verbosity_DEBUG    = +5,
 
 		// Normal messages. By default written to stderr.
 		Verbosity_INFO    =  0,
