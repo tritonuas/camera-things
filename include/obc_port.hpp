@@ -35,6 +35,7 @@ namespace OBCPort {
     bool send_image(void* img_addr, const size_t map_size);
     void start_camera_thread();
     void start_listener();
+    void return_ping(char ping_id);
     void handle_command(char cmd);
 };
 
