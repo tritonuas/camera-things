@@ -171,7 +171,7 @@ namespace OBCPort {
         {
             std::lock_guard<std::mutex> lock(client_mutex);
             current_sock = server_sock.load();
-            if (current_sock == -1) return false;
+            if (current_sock == -1) return;
             current_client_addr = client_addr;
             current_addr_len = addr_len;
         }
