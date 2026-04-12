@@ -28,6 +28,7 @@ include_directories(
 add_executable(raspy 
     src/raspy.cpp 
     src/simple-cam.cpp 
+    src/mock_camera.cpp
     src/event_loop.cpp 
     src/mavlink.cpp
     src/obc_port.cpp
