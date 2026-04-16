@@ -31,11 +31,27 @@ void load_configuration(const std::string& filename) {
     try {
         json data = json::parse(file);
 
-        UART_NAME = data.value("UART_NAME", "dev/serial0");
-        BAUDRATE = data.value("BAUDRATE", 57600);
-        DEBUG_MODE = data.value("DEBUG_MODE", 1);
-        SEND_TO_OBC = data.value("SEND_TO_OBC", 0);
-        MAVLINK_ENABLED = data.value("MAVLINK_ENABLED", 0);
+        if (data.contains("network")) {
+            auto& net = data["network"];
+            UART_NAME = net.value("uart_name", "dev/serial0");
+            BAUDRATE = net.value("baudrate", 57600);
+            SEND_TO_OBC = net.value("send_to_obc", 0);
+            MAVLINK_ENABLED = net.value("mavlink_enabled", 0);
+            OBCPort::SERVER_PORT = net.value("server_port", 25565);
+            OBCPort::SERVER_IP = net.value("server_ip", "192.168.77.2");
+        }
+
+        if (data.contains("camera")) {
+            auto& cam = data["camera"];
+            DEBUG_MODE = cam.value("debug_mode", 1);
+            RPICam::config.width = cam.value("width", 1456);
+            RPICam::config.height = cam.value("height", 1088);
+            RPICam::config.pixel_format = cam.value("pixel_format", "YUV420");
+            RPICam::config.buffer_count = cam.value("buffer_count", 3);
+            RPICam::config.timeout = cam.value("timeout", 10000);
+            RPICam::config.mock_mode = cam.value("mock_mode", false);
+            RPICam::config.mock_image_dir = cam.value("mock_image_dir", "../images/mock");
+        }
 
         // Print out configs for sanity check
         LOG_F(INFO, "  UART_NAME: %s", UART_NAME.c_str());
@@ -43,6 +59,15 @@ void load_configuration(const std::string& filename) {
         LOG_F(INFO, "  DEBUG_MODE: %d", DEBUG_MODE);
         LOG_F(INFO, "  SEND_TO_OBC: %d", SEND_TO_OBC);
         LOG_F(INFO, "  MAVLINK_ENABLED: %d", MAVLINK_ENABLED);
+        LOG_F(INFO, "  WIDTH: %d", RPICam::config.width);
+        LOG_F(INFO, "  HEIGHT: %d", RPICam::config.height);
+        LOG_F(INFO, "  PIXEL_FORMAT: %s", RPICam::config.pixel_format.c_str());
+        LOG_F(INFO, "  BUFFER_COUNT: %d", RPICam::config.buffer_count);
+        LOG_F(INFO, "  TIMEOUT: %d", RPICam::config.timeout);
+        LOG_F(INFO, "  SERVER_PORT: %d", OBCPort::SERVER_PORT);
+        LOG_F(INFO, "  SERVER_IP: %s", OBCPort::SERVER_IP.c_str());
+        LOG_F(INFO, "  MOCK_MODE: %d", RPICam::config.mock_mode);
+        LOG_F(INFO, "  MOCK_IMAGE_DIR: %s", RPICam::config.mock_image_dir.c_str());
 
     } catch (json::parse_error& e) {
         LOG_F(ERROR, "JSON Parse Error: %s", e.what());

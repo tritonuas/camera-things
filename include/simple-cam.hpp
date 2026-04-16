@@ -21,8 +21,6 @@
 #include "function_queue.hpp"
 #include "obc_port.hpp"
 
-#define TIMEOUT_SEC 10000
-#define BUFFER_COUNT 3
 
 using namespace libcamera;
 
@@ -46,6 +44,17 @@ namespace RPICam {
     inline int send_to_obc = 0;
     
     inline const unsigned int invalid_controls[] = {0x18, 0x1a};
+
+    struct CameraConfig {
+        int width = 1456;
+        int height = 1088;
+        std::string pixel_format = "YUV420";
+        int buffer_count = 3;
+        int timeout = 10000;
+        bool mock_mode = false;
+        std::string mock_image_dir = "../images/mock";
+    };
+    inline CameraConfig config;
 
     inline functionQueue funQ;
     inline std::vector<std::unique_ptr<Request>> requests;
