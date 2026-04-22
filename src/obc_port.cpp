@@ -162,6 +162,28 @@ namespace OBCPort {
             close(sock);
         }
     }
+    
+    void return_ping(char ping_id) {
+        struct sockaddr_in current_client_addr;
+        socklen_t current_addr_len;
+        int current_sock;
+
+        {
+            std::lock_guard<std::mutex> lock(client_mutex);
+            current_sock = server_sock.load();
+            if (current_sock == -1) return;
+            current_client_addr = client_addr;
+            current_addr_len = addr_len;
+        }
+
+        ssize_t sent = sendto(current_sock, &ping_id, 1, 0, (struct sockaddr*)&current_client_addr, current_addr_len);
+
+        if (sent < 0) {
+            perror("Returning ping id failed");
+            return;
+        }
+    }
+
     /**
      * @brief Processes received UDP commands
      * @param cmd The single-character command received
@@ -191,6 +213,10 @@ namespace OBCPort {
             case 'l':  // Lock controls
                 std::cout << "Control lock command (not implemented)\n";
                 //TODO: Implement control locking
+                break;
+            default: // Ping 
+                std::cout << "Received ping and sent back\n";
+                return_ping(cmd);
                 break;
         }
     }
