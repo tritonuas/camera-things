@@ -1,4 +1,5 @@
 #include "simple-cam.hpp"
+#include "mock_camera.hpp"
 #include <unistd.h>
 #include <loguru/loguru.hpp>
 
@@ -283,9 +284,14 @@ namespace RPICam {
         /*
          * Get the camera thing
          */
-        if (cm->cameras().empty()) {
-            LOG_F(INFO, "No cameras were identified on the system.");
+        if (RPICam::config.mock_mode || cm->cameras().empty()) {
+            if (!RPICam::config.mock_mode) {
+                LOG_F(INFO, "No cameras were identified on the system. Falling back to mock mode.");
+            } else {
+                LOG_F(INFO, "Mock mode explicitly enabled in config.");
+            }
             cm->stop();
+            MockCamera::start_mock_thread();
             return;
         }
 
@@ -303,12 +309,15 @@ namespace RPICam {
         /*
          * Config the stream
          */
+        /*
+         * Config the stream
+         */
         StreamConfiguration &streamConfig = config->at(0);
-        streamConfig.size = { 1456, 1088 };
+        streamConfig.size = { static_cast<unsigned int>(RPICam::config.width), static_cast<unsigned int>(RPICam::config.height) };
         LOG_F(INFO, "Default Raw configuration is: %s", streamConfig.toString().c_str());
-        streamConfig.bufferCount = BUFFER_COUNT;
+        streamConfig.bufferCount = RPICam::config.buffer_count;
 
-        streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("YUV420");
+        streamConfig.pixelFormat = streamConfig.pixelFormat.fromString(RPICam::config.pixel_format);
         //streamConfig.pixelFormat = streamConfig.pixelFormat.fromString("RGB888");
 
         LOG_F(INFO, "pixelFormat: %s", streamConfig.pixelFormat.toString().c_str());
@@ -470,7 +479,7 @@ namespace RPICam {
         /*
          * Run an EventLoop
          */
-        loop.timeout(TIMEOUT_SEC);
+        loop.timeout(RPICam::config.timeout);
         //int ret = loop.exec();
         std::thread cameraThread(&EventLoop::exec, &loop);
         std::vector<std::unique_ptr<Request>> requests;
