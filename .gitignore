@@ -49,3 +49,7 @@ __pycache__
 .venv
 *~
 out*
+
+# Build and log artifacts
+build/
+logs/*.log
