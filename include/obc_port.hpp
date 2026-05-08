@@ -17,9 +17,7 @@
 
 // TODO: make these config variables from JSON
 inline const size_t CHUNK_SIZE = 512;
-inline const char* SERVER_IP = "192.168.77.2"; 
-inline const int SERVER_PORT = 25565;
-inline const size_t SHM_SIZE = 1024 * 1024; 
+inline const size_t SHM_SIZE = 1024 * 1024;
 
 #pragma pack(push, 1)
 struct Header {
@@ -30,6 +28,9 @@ struct Header {
 #pragma pack(pop)
 
 namespace OBCPort {
+    extern std::string SERVER_IP;
+    extern int SERVER_PORT;
+
     void quit();
     extern struct sockaddr_in client_addr;
     bool send_image(void* img_addr, const size_t map_size);
