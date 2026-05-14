@@ -9,7 +9,39 @@ This is a repository for a camera server that runs on a Raspberry Pi Zero 2 W an
 - Jetson Orin Nano
 - Micro-USB to USB-A data cable
 
-## Quick Setup
+
+> You can set up this project locally outside of the Pi using Docker
+
+## Quick Setup (Docker) 
+Follow this if you don't have access to the Pi, but want to develop and test the project.
+> Note: the docker container does not support networking to obcpp container as of yet
+
+```bash
+git clone https://github.com/tritonuas/camera-things.git
+cd camera-things
+
+# Build and run docker container
+make build-docker
+make run-docker
+
+# Run mock server
+mkdir build && cd build
+cmake ..
+make
+./raspy
+```
+
+### Using Mock Camera:
+To test the project without a camera, you can use the mock camera
+
+1. Set `"USE_MOCK_CAMERA": 1` in `config/picam.json`.
+2. Make sure you have images in `/images/mock` directory.
+3. The mock camera reads images in a round-robin fashion. 
+
+
+## ~~Not So~~ Quick Setup (On Pi Zero 2 W)
+Follow this if you have the Pi Zero 2 W and want to set up the project on it. 
+
 
 1. [Setup the Networking Connection](#network-setup)
 2. Then setup the codebase below:
