@@ -268,6 +268,12 @@ namespace RPICam {
      */
     void start() {
 
+        if (RPICam::config.mock_mode) {
+            LOG_F(INFO, "Mock mode explicitly enabled in config. Bypassing CameraManager.");
+            MockCamera::start_mock_thread();
+            return;
+        }
+
         /*
          * Create a Camera Manager.
          */
@@ -284,12 +290,8 @@ namespace RPICam {
         /*
          * Get the camera thing
          */
-        if (RPICam::config.mock_mode || cm->cameras().empty()) {
-            if (!RPICam::config.mock_mode) {
-                LOG_F(INFO, "No cameras were identified on the system. Falling back to mock mode.");
-            } else {
-                LOG_F(INFO, "Mock mode explicitly enabled in config.");
-            }
+        if (cm->cameras().empty()) {
+            LOG_F(INFO, "No cameras were identified on the system. Falling back to mock mode.");
             cm->stop();
             MockCamera::start_mock_thread();
             return;
