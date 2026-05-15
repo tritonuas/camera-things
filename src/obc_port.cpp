@@ -11,6 +11,9 @@
 #include <thread>
 
 namespace OBCPort {
+    std::string SERVER_IP = "192.168.77.2";
+    int SERVER_PORT = 25565;
+
     // Thread-safe globals
     std::atomic<int> server_sock(-1);
     std::atomic<bool> quit_signal(false);

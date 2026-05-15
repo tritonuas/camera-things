@@ -89,4 +89,4 @@ install_manifest.txt
 
 # --- Local Configs ---
 config/*
-!config/picam.json.example
+!config/picam.json.examplelogs/*.log
