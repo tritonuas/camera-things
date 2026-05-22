@@ -9,6 +9,9 @@
 #include <mutex>
 #include <iostream>
 #include <thread>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 namespace OBCPort {
     std::string SERVER_IP = "192.168.77.2";
@@ -39,7 +42,10 @@ namespace OBCPort {
         uint32_t mem_size;
     };
 #pragma pack(pop)
-    bool send_image(void* img_addr, const size_t map_size) {
+
+    static constexpr size_t UDP_CHUNK_SIZE = 1024;
+
+    bool send_payload(const void* data_addr, const size_t data_size) {
         struct sockaddr_in current_client_addr;
         socklen_t current_addr_len;
         int current_sock;
@@ -52,15 +58,13 @@ namespace OBCPort {
             current_addr_len = addr_len;
         }
 
-        const size_t CHUNK_SIZE = 1024; // Match the first code's chunk size
-        const size_t total_chunks = (map_size + CHUNK_SIZE - 1) / CHUNK_SIZE;
-
+        const size_t total_chunks = (data_size + UDP_CHUNK_SIZE - 1) / UDP_CHUNK_SIZE;
 
         // Prepare and send the header
         Header header;
         header.magic = 0x12345678;
         header.total_chunks = total_chunks;
-        header.mem_size = map_size;
+        header.mem_size = data_size;
 
         // Convert header fields to network byte order
         Header net_header = header;
@@ -83,15 +87,14 @@ namespace OBCPort {
             // Check if the socket has changed during transmission
             if (server_sock.load() != current_sock) return false;
 
-            const size_t offset = chunk_idx * CHUNK_SIZE;
-            const size_t remaining = map_size - offset;
-            const size_t data_size = std::min(CHUNK_SIZE, remaining);
+            const size_t offset = chunk_idx * UDP_CHUNK_SIZE;
+            const size_t remaining = data_size - offset;
+            const size_t packet_data_size = std::min(UDP_CHUNK_SIZE, remaining);
 
-            // Prepare chunk: 4-byte index + data
-            std::vector<char> packet(sizeof(uint32_t) + data_size);
+            std::vector<char> packet(sizeof(uint32_t) + packet_data_size);
             uint32_t* index_ptr = reinterpret_cast<uint32_t*>(packet.data());
             *index_ptr = htonl(chunk_idx);
-            memcpy(packet.data() + sizeof(uint32_t), static_cast<char*>(img_addr) + offset, data_size);
+            memcpy(packet.data() + sizeof(uint32_t), static_cast<const char*>(data_addr) + offset, packet_data_size);
 
             // Send the chunk
             std::this_thread::sleep_for(std::chrono::microseconds(50));
@@ -104,6 +107,25 @@ namespace OBCPort {
         }
 
         return true;
+    }
+
+    bool send_image(void* img_addr, const size_t map_size) {
+        return send_payload(img_addr, map_size);
+    }
+
+    bool send_config() {
+        json payload = {
+            {"width", RPICam::config.width},
+            {"height", RPICam::config.height},
+            {"stride_y", RPICam::config.width},
+            {"stride_uv", RPICam::config.width / 2},
+            {"pixel_format", RPICam::config.pixel_format},
+            {"header_size", 12},
+            {"chunk_size", static_cast<int>(UDP_CHUNK_SIZE)}
+        };
+
+        std::string payload_str = payload.dump();
+        return send_payload(payload_str.data(), payload_str.size());
     }
     void start_camera_thread() {
         if(camera_thread_started.exchange(true)) return;
@@ -206,6 +228,13 @@ namespace OBCPort {
                 RPICam::send_count++;
                 RPICam::send_count_mutex.unlock();
                 std::cout << "prkajsdkajskljasd\n";
+                break;
+
+            case 'C':  // Camera configuration request
+                std::cout << "Camera config request received\n";
+                if (!send_config()) {
+                    std::cerr << "Failed to send camera config response\n";
+                }
                 break;
 
             case 'e':  // Exit command
