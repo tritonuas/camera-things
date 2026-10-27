@@ -31,7 +31,7 @@ namespace RPICam {
     inline std::mutex send_count_mutex;
     inline int send_current = 0;
 
-    inline const int save_to_file = 1;
+    inline const int save_to_file = 0;
     inline int image_counter = 0;
 
     inline int debug = 0;
@@ -69,7 +69,7 @@ namespace RPICam {
     void send_next_image(); 
     void start();
     void stop_taking_pictures();
-    void copy_controls(libcamera::ControlList *list_out, libcamera::ControlList *list_in, int all);
+    void copy_controls(libcamera::ControlList *list_out, const libcamera::ControlList *list_in, int all);
 
     inline ControlList controlList_copy;
     inline int image_count = 0;

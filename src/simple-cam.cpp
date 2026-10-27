@@ -43,7 +43,7 @@ namespace RPICam {
         /*
          * Prints all the metadata of the image, if enabled
          */
-        if (print_metadata || 1) {
+        if (print_metadata) {
             const ControlList &requestMetadata = request->metadata();
             for (const auto &ctrl : requestMetadata) {
                 const ControlId *id = controls::controls.at(ctrl.first);
@@ -145,25 +145,24 @@ namespace RPICam {
                 unsigned char *data = static_cast<unsigned char *>(mappedMemory) + (offset - mmap_offset);
 
 
-                if (send_current || save_to_file) {
-                    if (save_to_file) {
-                        // ... (your file saving logic)
-                        // Note: use 'data' and 'length' here, not 'mappedMemory' or 'mmap_length'
-                        std::ofstream file("out/output_plane" + std::to_string(image_counter) + ".raw", std::ios::binary);
-                        file.write(reinterpret_cast<const char *>(data), length);
-                        file.close();
+                if (save_to_file) {
+                    // ... (your file saving logic)
+                    // Note: use 'data' and 'length' here, not 'mappedMemory' or 'mmap_length'
+                    std::ofstream file("out/output_plane" + std::to_string(image_counter) + ".raw", std::ios::binary);
+                    file.write(reinterpret_cast<const char *>(data), length);
+                    file.close();
 
-                        if (debug) {
-                            LOG_F(INFO, "Saved: output_plane%d.raw", image_counter);
-                            image_counter++;
-                        }
+                    if (debug) {
+                        LOG_F(INFO, "Saved: output_plane%d.raw", image_counter);
                     }
-                    if (send_to_obc && send_current) { 
-                        if (debug) {
-                            LOG_F(1, "Sending to OBC: %lu bytes", length);
-                        }
-                        OBCPort::send_image(data, length);
+                    image_counter++;
+                }
+
+                if (send_to_obc && send_current) { 
+                    if (debug) {
+                        LOG_F(1, "Sending to OBC: %lu bytes", length);
                     }
+                    OBCPort::send_image(data, length);
                 }
 
                 // Unmap using the original mapped address and mmap_length
@@ -243,7 +242,7 @@ namespace RPICam {
                     name = "External camera";
                     const auto &model = props.get(properties::Model);
                     if (model)
-                        name = " '" + *model + "'";
+                        name = " '" + std::string(*model) + "'";
                     break;
             }
         }
@@ -528,7 +527,7 @@ namespace RPICam {
      * ControlList &controls = request->controls(); 
      * controls.set(controls::AnalogueGain, 0.5);
      */
-    void copy_controls(ControlList *list_out, ControlList *list_in, int all) {
+    void copy_controls(ControlList *list_out, const ControlList *list_in, int all) {
         list_out->clear();
         int skip = 0;
         for (const auto &ctrl : *list_in) {
