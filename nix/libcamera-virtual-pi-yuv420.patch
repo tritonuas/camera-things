@@ -1,0 +1,420 @@
+diff --git a/src/libcamera/pipeline/virtual/config_parser.cpp b/src/libcamera/pipeline/virtual/config_parser.cpp
+index 5169fd3..e91651d 100644
+--- a/src/libcamera/pipeline/virtual/config_parser.cpp
++++ b/src/libcamera/pipeline/virtual/config_parser.cpp
+@@ -7,6 +7,7 @@
+ 
+ #include "config_parser.h"
+ 
++#include <algorithm>
+ #include <string.h>
+ #include <utility>
+ 
+@@ -29,6 +30,8 @@ ConfigParser::parseConfigFile(File &file, PipelineHandler *pipe)
+ {
+ 	std::vector<std::unique_ptr<VirtualCameraData>> configurations;
+ 
++	configDir_ = std::filesystem::path(file.fileName()).parent_path();
++
+ 	std::unique_ptr<ValueNode> cameras = YamlParser::parse(file);
+ 	if (!cameras) {
+ 		LOG(Virtual, Error) << "Failed to parse config file.";
+@@ -198,16 +201,23 @@ int ConfigParser::parseFrameGenerator(const ValueNode &cameraConfigData, Virtual
+ 		return -EINVAL;
+ 	}
+ 
++	std::filesystem::path framesPath = *path;
++	if (framesPath.is_relative())
++		framesPath = configDir_ / framesPath;
++
+ 	std::vector<std::filesystem::path> files;
+ 
+-	switch (std::filesystem::symlink_status(*path).type()) {
++	switch (std::filesystem::status(framesPath).type()) {
+ 	case std::filesystem::file_type::regular:
+-		files.push_back(*path);
++		files.push_back(framesPath);
+ 		break;
+ 
+ 	case std::filesystem::file_type::directory:
+-		for (const auto &dentry : std::filesystem::directory_iterator{ *path }) {
+-			if (dentry.is_regular_file())
++		/* Only load JPEGs so other files (e.g. telemetry sidecars) can sit alongside */
++		for (const auto &dentry : std::filesystem::directory_iterator{ framesPath }) {
++			std::string ext = dentry.path().extension().string();
++			std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
++			if (dentry.is_regular_file() && (ext == ".jpg" || ext == ".jpeg"))
+ 				files.push_back(dentry.path());
+ 		}
+ 
+@@ -216,13 +226,15 @@ int ConfigParser::parseFrameGenerator(const ValueNode &cameraConfigData, Virtual
+ 		});
+ 
+ 		if (files.empty()) {
+-			LOG(Virtual, Error) << "Directory has no files: " << *path;
+-			return -EINVAL;
++			LOG(Virtual, Warning)
++				<< "No JPEGs in " << framesPath << ", using color bars";
++			data->config_.frame = TestPattern::ColorBars;
++			return 0;
+ 		}
+ 		break;
+ 
+ 	default:
+-		LOG(Virtual, Error) << "Frame: " << *path << " is not supported";
++		LOG(Virtual, Error) << "Frame: " << framesPath << " is not supported";
+ 		return -EINVAL;
+ 	}
+ 
+diff --git a/src/libcamera/pipeline/virtual/config_parser.h b/src/libcamera/pipeline/virtual/config_parser.h
+index 97d6dff..3f52fba 100644
+--- a/src/libcamera/pipeline/virtual/config_parser.h
++++ b/src/libcamera/pipeline/virtual/config_parser.h
+@@ -7,6 +7,7 @@
+ 
+ #pragma once
+ 
++#include <filesystem>
+ #include <memory>
+ #include <vector>
+ 
+@@ -34,6 +35,9 @@ private:
+ 	int parseFrameGenerator(const ValueNode &cameraConfigData, VirtualCameraData *data);
+ 	int parseLocation(const ValueNode &cameraConfigData, VirtualCameraData *data);
+ 	int parseModel(const ValueNode &cameraConfigData, VirtualCameraData *data);
++
++	/* Relative frame paths are resolved against the config file's directory */
++	std::filesystem::path configDir_;
+ };
+ 
+ } /* namespace libcamera */
+diff --git a/src/libcamera/pipeline/virtual/frame_generator.h b/src/libcamera/pipeline/virtual/frame_generator.h
+index a0658c4..ca0b1a7 100644
+--- a/src/libcamera/pipeline/virtual/frame_generator.h
++++ b/src/libcamera/pipeline/virtual/frame_generator.h
+@@ -12,6 +12,28 @@
+ 
+ namespace libcamera {
+ 
++/*
++ * Frames are YUV420 laid out like the Raspberry Pi ISP output: luma rows are
++ * padded to kStrideAlign bytes and chroma rows are half the luma stride
++ * (1456x1088 gives strides of 1472 and 736).
++ */
++struct Yuv420Layout {
++	static constexpr unsigned int kStrideAlign = 32;
++
++	explicit Yuv420Layout(const Size &size)
++		: yStride((size.width + kStrideAlign - 1) / kStrideAlign * kStrideAlign),
++		  uvStride(yStride / 2),
++		  ySize(yStride * size.height),
++		  uvSize(uvStride * ((size.height + 1) / 2))
++	{
++	}
++
++	unsigned int yStride;
++	unsigned int uvStride;
++	unsigned int ySize;
++	unsigned int uvSize;
++};
++
+ class FrameGenerator
+ {
+ public:
+diff --git a/src/libcamera/pipeline/virtual/image_frame_generator.cpp b/src/libcamera/pipeline/virtual/image_frame_generator.cpp
+index 5ba7650..05bcf04 100644
+--- a/src/libcamera/pipeline/virtual/image_frame_generator.cpp
++++ b/src/libcamera/pipeline/virtual/image_frame_generator.cpp
+@@ -25,7 +25,7 @@ LOG_DECLARE_CATEGORY(Virtual)
+ 
+ /*
+  * Factory function to create an ImageFrameGenerator object.
+- * Read the images and convert them to buffers in NV12 format.
++ * Read the images and convert them to buffers in YUV420 format.
+  * Store the pointers to the buffers to a list (imageFrameDatas)
+  */
+ std::unique_ptr<ImageFrameGenerator>
+@@ -37,7 +37,7 @@ ImageFrameGenerator::create(ImageFrames &imageFrames)
+ 
+ 	/*
+ 	 * For each file in the directory, load the image,
+-	 * convert it to NV12, and store the pointer.
++	 * convert it to YUV420, and store the pointer.
+ 	 */
+ 	for (const auto &path : imageFrames.files) {
+ 		File file(path);
+@@ -64,19 +64,25 @@ ImageFrameGenerator::create(ImageFrames &imageFrames)
+ 			return nullptr;
+ 		}
+ 
++		int halfWidth = (width + 1) / 2;
++		int halfHeight = (height + 1) / 2;
+ 		std::unique_ptr<uint8_t[]> dstY =
+ 			std::make_unique<uint8_t[]>(width * height);
+-		std::unique_ptr<uint8_t[]> dstUV =
+-			std::make_unique<uint8_t[]>(width * height / 2);
+-		int ret = libyuv::MJPGToNV12(buffer.get(), fileSize,
+-					     dstY.get(), width, dstUV.get(),
+-					     width, width, height, width, height);
++		std::unique_ptr<uint8_t[]> dstU =
++			std::make_unique<uint8_t[]>(halfWidth * halfHeight);
++		std::unique_ptr<uint8_t[]> dstV =
++			std::make_unique<uint8_t[]>(halfWidth * halfHeight);
++		int ret = libyuv::MJPGToI420(buffer.get(), fileSize,
++					     dstY.get(), width,
++					     dstU.get(), halfWidth,
++					     dstV.get(), halfWidth,
++					     width, height, width, height);
+ 		if (ret != 0)
+-			LOG(Virtual, Error) << "MJPGToNV12() failed with " << ret;
++			LOG(Virtual, Error) << "MJPGToI420() failed with " << ret;
+ 
+ 		imageFrameGenerator->imageFrameDatas_.emplace_back(
+-			ImageFrameData{ std::move(dstY), std::move(dstUV),
+-					Size(width, height) });
++			ImageFrameData{ std::move(dstY), std::move(dstU),
++					std::move(dstV), Size(width, height) });
+ 	}
+ 
+ 	ASSERT(!imageFrameGenerator->imageFrameDatas_.empty());
+@@ -98,28 +104,30 @@ void ImageFrameGenerator::configure(const Size &size)
+ 	parameter_ = 0;
+ 
+ 	for (unsigned int i = 0; i < imageFrameDatas_.size(); i++) {
+-		/* Scale the imageFrameDatas_ to scaledY and scaledUV */
++		/* Scale the imageFrameDatas_ to scaledY, scaledU and scaledV */
+ 		unsigned int halfSizeWidth = (size.width + 1) / 2;
+ 		unsigned int halfSizeHeight = (size.height + 1) / 2;
+ 		std::unique_ptr<uint8_t[]> scaledY =
+ 			std::make_unique<uint8_t[]>(size.width * size.height);
+-		std::unique_ptr<uint8_t[]> scaledUV =
+-			std::make_unique<uint8_t[]>(halfSizeWidth * halfSizeHeight * 2);
++		std::unique_ptr<uint8_t[]> scaledU =
++			std::make_unique<uint8_t[]>(halfSizeWidth * halfSizeHeight);
++		std::unique_ptr<uint8_t[]> scaledV =
++			std::make_unique<uint8_t[]>(halfSizeWidth * halfSizeHeight);
+ 		auto &src = imageFrameDatas_[i];
++		int srcHalfWidth = (src.size.width + 1) / 2;
+ 
+-		/*
+-		 * \todo Some platforms might enforce stride due to GPU.
+-                 * The width needs to be a multiple of the stride to work
+-                 * properly for now.
+-		 */
+-		libyuv::NV12Scale(src.Y.get(), src.size.width,
+-				  src.UV.get(), src.size.width,
++		libyuv::I420Scale(src.Y.get(), src.size.width,
++				  src.U.get(), srcHalfWidth,
++				  src.V.get(), srcHalfWidth,
+ 				  src.size.width, src.size.height,
+-				  scaledY.get(), size.width, scaledUV.get(), size.width,
++				  scaledY.get(), size.width,
++				  scaledU.get(), halfSizeWidth,
++				  scaledV.get(), halfSizeWidth,
+ 				  size.width, size.height, libyuv::FilterMode::kFilterBilinear);
+ 
+ 		scaledFrameDatas_.emplace_back(
+-			ImageFrameData{ std::move(scaledY), std::move(scaledUV), size });
++			ImageFrameData{ std::move(scaledY), std::move(scaledU),
++					std::move(scaledV), size });
+ 	}
+ }
+ 
+@@ -134,11 +142,16 @@ int ImageFrameGenerator::generateFrame(const Size &size, const FrameBuffer *buff
+ 	/* Loop only around the number of images available */
+ 	frameIndex_ %= imageFrameDatas_.size();
+ 
+-	/* Write the scaledY and scaledUV to the mapped frame buffer */
+-	libyuv::NV12Copy(scaledFrameDatas_[frameIndex_].Y.get(), size.width,
+-			 scaledFrameDatas_[frameIndex_].UV.get(), size.width,
+-			 planes[0].data(), size.width,
+-			 planes[1].data(), size.width,
++	/* Write the scaled planes to the mapped frame buffer, adding row padding */
++	const Yuv420Layout layout(size);
++	const ImageFrameData &frame = scaledFrameDatas_[frameIndex_];
++	int halfWidth = (size.width + 1) / 2;
++	libyuv::I420Copy(frame.Y.get(), size.width,
++			 frame.U.get(), halfWidth,
++			 frame.V.get(), halfWidth,
++			 planes[0].data(), layout.yStride,
++			 planes[1].data(), layout.uvStride,
++			 planes[2].data(), layout.uvStride,
+ 			 size.width, size.height);
+ 
+ 	/* Proceed to the next image every 4 frames */
+diff --git a/src/libcamera/pipeline/virtual/image_frame_generator.h b/src/libcamera/pipeline/virtual/image_frame_generator.h
+index 42a077b..f3750d6 100644
+--- a/src/libcamera/pipeline/virtual/image_frame_generator.h
++++ b/src/libcamera/pipeline/virtual/image_frame_generator.h
+@@ -32,7 +32,8 @@ private:
+ 
+ 	struct ImageFrameData {
+ 		std::unique_ptr<uint8_t[]> Y;
+-		std::unique_ptr<uint8_t[]> UV;
++		std::unique_ptr<uint8_t[]> U;
++		std::unique_ptr<uint8_t[]> V;
+ 		Size size;
+ 	};
+ 
+diff --git a/src/libcamera/pipeline/virtual/test_pattern_generator.cpp b/src/libcamera/pipeline/virtual/test_pattern_generator.cpp
+index 12cce9f..1a2bc02 100644
+--- a/src/libcamera/pipeline/virtual/test_pattern_generator.cpp
++++ b/src/libcamera/pipeline/virtual/test_pattern_generator.cpp
+@@ -13,6 +13,7 @@
+ 
+ #include "libcamera/internal/mapped_framebuffer.h"
+ 
++#include <libyuv/convert.h>
+ #include <libyuv/convert_from_argb.h>
+ 
+ namespace {
+@@ -52,12 +53,14 @@ int TestPatternGenerator::generateFrame(const Size &size,
+ 	rotateLeft1Column<kARGBSize>(size, template_.get());
+ 
+ 	/* Convert the template_ to the frame buffer */
+-	int ret = libyuv::ARGBToNV12(template_.get(), size.width * kARGBSize,
+-				     planes[0].data(), size.width,
+-				     planes[1].data(), size.width,
++	const Yuv420Layout layout(size);
++	int ret = libyuv::ARGBToI420(template_.get(), size.width * kARGBSize,
++				     planes[0].data(), layout.yStride,
++				     planes[1].data(), layout.uvStride,
++				     planes[2].data(), layout.uvStride,
+ 				     size.width, size.height);
+ 	if (ret != 0)
+-		LOG(Virtual, Error) << "ARGBToNV12() failed with " << ret;
++		LOG(Virtual, Error) << "ARGBToI420() failed with " << ret;
+ 
+ 	return ret;
+ }
+diff --git a/src/libcamera/pipeline/virtual/virtual.cpp b/src/libcamera/pipeline/virtual/virtual.cpp
+index 81d2ddd..32de7e6 100644
+--- a/src/libcamera/pipeline/virtual/virtual.cpp
++++ b/src/libcamera/pipeline/virtual/virtual.cpp
+@@ -17,6 +17,7 @@
+ #include <set>
+ #include <stdint.h>
+ #include <string>
++#include <thread>
+ #include <time.h>
+ #include <utility>
+ #include <vector>
+@@ -130,6 +131,12 @@ VirtualCameraData::VirtualCameraData(PipelineHandler *pipe,
+ 
+ void VirtualCameraData::processRequest(Request *request)
+ {
++	if (frameInterval_.count()) {
++		std::this_thread::sleep_until(nextFrameTime_);
++		nextFrameTime_ = std::max(nextFrameTime_, std::chrono::steady_clock::now()) +
++				 frameInterval_;
++	}
++
+ 	for (const auto &[stream, buffer] : request->buffers()) {
+ 		bool found = false;
+ 		/* map buffer and fill test patterns */
+@@ -202,8 +209,8 @@ CameraConfiguration::Status VirtualCameraConfiguration::validate()
+ 			adjusted = true;
+ 		}
+ 
+-		if (cfg.pixelFormat != formats::NV12) {
+-			cfg.pixelFormat = formats::NV12;
++		if (cfg.pixelFormat != formats::YUV420) {
++			cfg.pixelFormat = formats::YUV420;
+ 			status = Adjusted;
+ 			adjusted = true;
+ 		}
+@@ -223,9 +230,9 @@ CameraConfiguration::Status VirtualCameraConfiguration::validate()
+ 			LOG(Virtual, Info)
+ 				<< "Stream configuration adjusted to " << cfg.toString();
+ 
+-		const PixelFormatInfo &info = PixelFormatInfo::info(cfg.pixelFormat);
+-		cfg.stride = info.stride(cfg.size.width, 0, 1);
+-		cfg.frameSize = info.frameSize(cfg.size, 1);
++		const Yuv420Layout layout(cfg.size);
++		cfg.stride = layout.yStride;
++		cfg.frameSize = layout.ySize + 2 * layout.uvSize;
+ 
+ 		cfg.bufferCount = VirtualCameraConfiguration::kBufferCount;
+ 	}
+@@ -275,7 +282,7 @@ PipelineHandlerVirtual::generateConfiguration(Camera *camera,
+ 		}
+ 
+ 		std::map<PixelFormat, std::vector<SizeRange>> streamFormats;
+-		PixelFormat pixelFormat = formats::NV12;
++		PixelFormat pixelFormat = formats::YUV420;
+ 		streamFormats[pixelFormat] = { { data->config_.minResolutionSize,
+ 						 data->config_.maxResolutionSize } };
+ 		StreamFormats formats(streamFormats);
+@@ -303,6 +310,13 @@ int PipelineHandlerVirtual::configure(Camera *camera,
+ 		data->streamConfigs_[i].frameGenerator->configure(c.size);
+ 	}
+ 
++	data->frameInterval_ = std::chrono::microseconds(0);
++	for (const auto &resolution : data->config_.resolutions) {
++		if (resolution.size == config->at(0).size)
++			data->frameInterval_ = std::chrono::microseconds(
++				1000000 / resolution.frameRates[1]);
++	}
++
+ 	return 0;
+ }
+ 
+@@ -314,11 +328,9 @@ int PipelineHandlerVirtual::exportFrameBuffers([[maybe_unused]] Camera *camera,
+ 		return -ENOBUFS;
+ 
+ 	const StreamConfiguration &config = stream->configuration();
+-	const PixelFormatInfo &info = PixelFormatInfo::info(config.pixelFormat);
++	const Yuv420Layout layout(config.size);
+ 
+-	std::vector<unsigned int> planeSizes;
+-	for (size_t i = 0; i < info.numPlanes(); ++i)
+-		planeSizes.push_back(info.planeSize(config.size, i));
++	std::vector<unsigned int> planeSizes = { layout.ySize, layout.uvSize, layout.uvSize };
+ 
+ 	return dmaBufAllocator_.exportBuffers(config.bufferCount, planeSizes, buffers);
+ }
+@@ -331,6 +343,8 @@ int PipelineHandlerVirtual::start([[maybe_unused]] Camera *camera,
+ 	for (auto &s : data->streamConfigs_)
+ 		s.seq = 0;
+ 
++	data->nextFrameTime_ = std::chrono::steady_clock::now();
++
+ 	data->bufferCompleted.connect(this, &PipelineHandlerVirtual::bufferCompleted);
+ 	data->start();
+ 
+@@ -374,7 +388,11 @@ bool PipelineHandlerVirtual::match([[maybe_unused]] DeviceEnumerator *enumerator
+ 
+ 	created_ = true;
+ 
+-	std::string configFile = configurationFile("virtual", "virtual.yaml", true);
++	std::string configFile;
++	if (const char *path = utils::secure_getenv("LIBCAMERA_VIRTUAL_CONFIG"))
++		configFile = path;
++	else
++		configFile = configurationFile("virtual", "virtual.yaml", true);
+ 	if (configFile.empty()) {
+ 		LOG(Virtual, Debug)
+ 			<< "Configuration file not found, skipping virtual cameras";
+diff --git a/src/libcamera/pipeline/virtual/virtual.h b/src/libcamera/pipeline/virtual/virtual.h
+index 215e56f..74f97e2 100644
+--- a/src/libcamera/pipeline/virtual/virtual.h
++++ b/src/libcamera/pipeline/virtual/virtual.h
+@@ -7,6 +7,7 @@
+ 
+ #pragma once
+ 
++#include <chrono>
+ #include <string>
+ #include <variant>
+ #include <vector>
+@@ -66,6 +67,10 @@ public:
+ 
+ 	std::vector<StreamConfig> streamConfigs_;
+ 	Signal<FrameBuffer *> bufferCompleted;
++
++	/* Frames are delivered no faster than the configured frame rate */
++	std::chrono::microseconds frameInterval_{ 0 };
++	std::chrono::steady_clock::time_point nextFrameTime_;
+ };
+ 
+ } /* namespace libcamera */
