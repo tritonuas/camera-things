@@ -24,6 +24,10 @@ namespace OBCPort {
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(sockaddr_in);
 
+    constexpr size_t CHUNK_SIZE = 1024;
+    constexpr size_t PACKET_SIZE = sizeof(uint32_t) + CHUNK_SIZE; // 1028
+    std::array<uint8_t, PACKET_SIZE> packet;
+
     void quit() {
         quit_signal = true;
         if(int sock = server_sock.exchange(-1); sock != -1) {
@@ -88,7 +92,6 @@ namespace OBCPort {
             const size_t data_size = std::min(CHUNK_SIZE, remaining);
 
             // Prepare chunk: 4-byte index + data
-            std::vector<char> packet(sizeof(uint32_t) + data_size);
             uint32_t* index_ptr = reinterpret_cast<uint32_t*>(packet.data());
             *index_ptr = htonl(chunk_idx);
             memcpy(packet.data() + sizeof(uint32_t), static_cast<char*>(img_addr) + offset, data_size);
