@@ -33,7 +33,7 @@ void load_configuration(const std::string& filename) {
 
         if (data.contains("network")) {
             auto& net = data["network"];
-            UART_NAME = net.value("uart_name", "dev/serial0");
+            UART_NAME = net.value("uart_name", "/dev/serial0");
             BAUDRATE = net.value("baudrate", 57600);
             SEND_TO_OBC = net.value("send_to_obc", 0);
             MAVLINK_ENABLED = net.value("mavlink_enabled", 0);

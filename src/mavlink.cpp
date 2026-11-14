@@ -1,21 +1,17 @@
 #include "mavlink.hpp"
+
+#include <loguru/loguru.hpp>
+
 #include "obc_port.hpp"
 #include "simple-cam.hpp"
-#include <loguru/loguru.hpp>
-#include <sys/mman.h>
-
 /*
  * Mavlink code for talking to the pixhawk
  * TODO: maybe use the same code for talking to the gimbal board (if that is even nessicary)
- * 
- *
  */
 
 namespace Mavlink {
 
-    #ifndef MAV_COMP_ID_PI
     #define MAV_COMP_ID_PI 191
-    #endif
 
     void mavlink(Port *port_) {
         // initialize attributes
@@ -53,22 +49,23 @@ namespace Mavlink {
     }
 
     void process_mavlink_message(mavlink_message_t msg) {
-        //uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+        if (!RPICam::send_to_obc) {
+            LOG_F(DEBUG, "Mavlink: Sending to OBC disabled (Local)");
+            return;
+        }
 
-	if (RPICam::send_to_obc) {
-        void *buffer = mmap(NULL, MAVLINK_MAX_PACKET_LEN,
-                PROT_READ | PROT_WRITE,
-                MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+        // void *buffer = mmap(NULL, MAVLINK_MAX_PACKET_LEN,
+        //         PROT_READ | PROT_WRITE,
+        //         MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+        funQ.push_front_function([msg]() {
+            uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+            uint16_t len = mavlink_msg_to_send_buffer(buffer, &msg);
+            bool     res = OBCPort::send_image(buffer, len);
 
-        mavlink_msg_to_send_buffer(reinterpret_cast<uint8_t*>(buffer), &msg);
-
-        funQ.push_front_function(OBCPort::send_image,
-                buffer, MAVLINK_MAX_PACKET_LEN);
-	}
-
-	else{
-		LOG_F(DEBUG, "Mavlink: Sending to OBC disabled (Local)");
-	}
+            if (!res) {
+                LOG_F(DEBUG, "Mavlink: Failed to send to OBC");
+            }
+        });
     }
 
 
