@@ -7,6 +7,11 @@ project(RaspberryPi
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wno-unused-parameter")
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+
 # --- FIND SYSTEM DEPENDENCIES ---
 find_package(PkgConfig)
 pkg_check_modules(LIBCAMERA REQUIRED IMPORTED_TARGET libcamera)
