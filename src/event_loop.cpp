@@ -36,9 +36,8 @@ int EventLoop::exec()
 	exit_.store(false, std::memory_order_release);
 
 	while (!exit_.load(std::memory_order_acquire)) {
-		dispatchCalls();
 		event_base_loop(event_, EVLOOP_NO_EXIT_ON_EMPTY);
-	}
+    }
 
 	return exitCode_;
 }
@@ -67,30 +66,5 @@ void EventLoop::timeout(unsigned int sec) {
 	tv.tv_usec = 0;
 	ev = evtimer_new(event_, &timeoutTriggered, this);
 	evtimer_add(ev, &tv);
-}
-
-void EventLoop::callLater(const std::function<void()> &func)
-{
-	{
-		std::unique_lock<std::mutex> locker(lock_);
-		calls_.push_back(func);
-	}
-
-	interrupt();
-}
-
-void EventLoop::dispatchCalls()
-{
-	std::unique_lock<std::mutex> locker(lock_);
-
-	for (auto iter = calls_.begin(); iter != calls_.end(); ) {
-		std::function<void()> call = std::move(*iter);
-
-		iter = calls_.erase(iter);
-
-		locker.unlock();
-		call();
-		locker.lock();
-	}
 }
 
