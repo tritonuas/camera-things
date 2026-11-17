@@ -204,21 +204,18 @@ namespace RPICam {
 
 
     /*
-     * Honestly I have no idea why this and the above function are here, they
-     * essentially enqueue a function that enqueues another function, but it works
-     * and I am too scared to touch it as this was copy pasted from the default 
-     * libcamera template and I have no idea what that loop thingy does but I have 
-     * a tiny bit of idea what the function queue thing that "I" (deekseek)
-     * wrote does
-     *
-     * So if someone smarter than me wants to fix this bit, then fix it.
+     * Slot for Camera::requestCompleted. Runs on libcamera's internal thread,
+     * so it only hands the request off to funQ; saveData runs on the funQ
+     * thread. (The libcamera simple-cam template bounced this through
+     * EventLoop::callLater first, which heap-allocated a std::list node per
+     * frame and was redundant with funQ.)
      */
     void requestComplete(Request *request) {
         if (request->status() == Request::RequestCancelled) {
             return;
         }
 
-        loop.callLater(std::bind(&processRequest, request));
+        processRequest(request);
     }
 
     /*
@@ -383,7 +380,7 @@ namespace RPICam {
         for (StreamConfiguration &cfg : *config) {
             int ret = allocator->allocate(cfg.stream());
             if (ret < 0) {
-                LOG_F(ERROR, "Can't allocate buffers");
+                LOG_F(ERROR, "Can't allocate buffers: %s", strerror(-ret));
                 return;
                 //return EXIT_FAILURE;
             }

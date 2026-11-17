@@ -8,9 +8,6 @@
 #define __SIMPLE_CAM_EVENT_LOOP_H__
 
 #include <atomic>
-#include <functional>
-#include <list>
-#include <mutex>
 
 struct event_base;
 
@@ -24,7 +21,6 @@ public:
 	int exec();
 
 	void timeout(unsigned int sec);
-	void callLater(const std::function<void()> &func);
 
 private:
 	static EventLoop *instance_;
@@ -35,11 +31,7 @@ private:
 	std::atomic<bool> exit_;
 	int exitCode_;
 
-	std::list<std::function<void()>> calls_;
-	std::mutex lock_;
-
 	void interrupt();
-	void dispatchCalls();
 };
 
 #endif /* __SIMPLE_CAM_EVENT_LOOP_H__ */
