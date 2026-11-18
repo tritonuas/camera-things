@@ -1,7 +1,11 @@
 #include "simple-cam.hpp"
-#include "mock_camera.hpp"
+
 #include <unistd.h>
+
 #include <loguru/loguru.hpp>
+
+#include "function_queue.hpp"
+#include "mock_camera.hpp"
 
 using namespace libcamera;
 
@@ -198,7 +202,7 @@ namespace RPICam {
             LOG_F(INFO, "Request Queued: %s", request->toString().c_str());
         }
 
-        funQ.push_back_function(saveData, request);
+        functionQueue::push_back_function(saveData, request);
     }
 
 

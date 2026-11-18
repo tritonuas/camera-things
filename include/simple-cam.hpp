@@ -56,7 +56,6 @@ namespace RPICam {
     };
     inline CameraConfig config;
 
-    inline functionQueue funQ;
     inline std::vector<std::unique_ptr<Request>> requests;
     inline std::shared_ptr<Camera> camera;
 
