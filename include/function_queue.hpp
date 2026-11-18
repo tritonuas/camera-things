@@ -1,76 +1,83 @@
 #ifndef __FUNCTION_QUEUE_H__
 #define __FUNCTION_QUEUE_H__
 
-#include <deque>
+#include <array>
+#include <atomic>
+#include <condition_variable>
 #include <functional>
 #include <iostream>
+#include <mutex>
+#include <thread>
 
+#include <loguru/loguru.hpp>
 
-
-
+// [TODO]: handle failed pushes
 class functionQueue {
+    // [TODO] : complete guess on capacity that we need.
+    static constexpr size_t CAPACITY = 256;
 
-    static inline std::deque<std::function<void()>> function_queue;
+    static inline std::condition_variable cv;
     static inline std::mutex function_queue_mutex;
-    static inline int quit_signal = 0;
+    static inline std::atomic<bool> quit_signal = false;
 
-    static inline int totalCount;
-    int count;
-    
+    // circular buffer
+    static inline std::array<std::function<void()>, CAPACITY> function_queue;
+    static inline size_t size = 0;
+    static inline size_t head = 0;
 
-
-
-    //TODO: maybe keep track of number of things sent
     public:
-        functionQueue() {
-            count = 0;
-        }
-
-
-        
         template <typename Func, typename... Args>
         void push_back_function(Func&& func, Args&&... args) {
+            std::lock_guard<std::mutex> lock(function_queue_mutex);
+            if (size == CAPACITY) {
+                LOG_F(ERROR, "Failed to push to function queue.");
+                return;
+            }
 
-            //std::cout << "function added to the quueue";
-            function_queue_mutex.lock();
-            function_queue.push_back([=]() { func(args...); });
-            function_queue_mutex.unlock();
+            function_queue[(head + size) % CAPACITY] = [=]() { func(args...); };
+            size++;
+
+            cv.notify_one();
         }
 
         template <typename Func, typename... Args>
         void push_front_function(Func&& func, Args&&... args) {
+            std::lock_guard<std::mutex> lock(function_queue_mutex);
+            if (size == CAPACITY) {
+                LOG_F(ERROR, "Failed to push to function queue.");
+                return;
+            }
 
-            //std::cout << "function added to the quueue";
-            function_queue_mutex.lock();
-            function_queue.emplace_front([=]() { func(args...); });
-            function_queue_mutex.unlock();
+            head = (head + CAPACITY - 1) % CAPACITY;
+            function_queue[head] = [=]() { func(args...); };
+            size++;
 
+            cv.notify_one();
         }
 
 
         bool runOne() {
             std::function<void()> tempFunc;    
-            if (function_queue.empty()) {
-                //std::cout << "function queue empty";
-                return true;
+            {
+                std::unique_lock<std::mutex> lock(function_queue_mutex);
+                cv.wait(lock, [] { return size > 0 || quit_signal; });
+                    //std::cout << "function queue empty";
+                if (size == 0) {
+                    return false;
+                }
+
+                tempFunc = std::move(function_queue[head]);
+                head = (head + 1) % CAPACITY;
+                size--;
             }
 
-            function_queue_mutex.lock();
-            tempFunc = std::move(function_queue.front());
-            function_queue.pop_front();
-            function_queue_mutex.unlock();
-            //std::cout << "ran one function";
             tempFunc();
-
-            return function_queue.empty();
+            return true;
         }
 
         void runLoop() {
-            quit_signal = 0;
             while (!quit_signal) {
-                //std::cout << "askdj";
                 runOne();
-                //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
         }
 
@@ -80,9 +87,8 @@ class functionQueue {
         }
 
         void quit() {
-            //TODO: check if I need a mutex here
             quit_signal = 1;
+            cv.notify_all();
         }
-
 };
 #endif
