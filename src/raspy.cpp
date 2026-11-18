@@ -105,11 +105,7 @@ int main(int argc, char* argv[]) {
         Mavlink::start();
     }
 
-
-    functionQueue functionQ;
-
-
-    functionQ.startSendingLoop();
+    functionQueue::startSendingLoop();
 
     OBCPort::start_listener();
     LOG_F(INFO, "Started listening to OBC port");

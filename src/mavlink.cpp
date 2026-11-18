@@ -57,7 +57,7 @@ namespace Mavlink {
         // void *buffer = mmap(NULL, MAVLINK_MAX_PACKET_LEN,
         //         PROT_READ | PROT_WRITE,
         //         MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-        funQ.push_front_function([msg]() {
+        functionQueue::push_front_function([msg]() {
             uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
             uint16_t len = mavlink_msg_to_send_buffer(buffer, &msg);
             bool     res = OBCPort::send_image(buffer, len);

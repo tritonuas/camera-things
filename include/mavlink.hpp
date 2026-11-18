@@ -78,7 +78,6 @@ namespace Mavlink {
 
     inline Mavlink_Messages current_messages;
 
-    inline functionQueue funQ;
     // ------------------------------------------------
 
     void mavlink(Port *port_);
